@@ -22,6 +22,9 @@
 | [0016](0016-candidate-model-and-mock-dataset.md) | 이력서는 반정형 JSON(= 이력서 전처리 결과 계약) + 줄 번호 렌더링, 목업 12건은 레포에 둔다 | 채택 | 03 |
 | [0017](0017-score-formula.md) | 점수식 — 필수·우대 가중 평균 × 필수 미충족 게이트, "모름"은 절반 | 채택 (상수는 실험으로 보정) | 03 |
 | [0018](0018-statutory-preferences-not-scored.md) | 법정 우대(국가보훈·장애인)는 점수에 반영하지 않고 이력서에서 받지 않는다 | 채택 | 02·03 |
+| [0019](0019-fastapi-synchronous.md) | API는 FastAPI로, 실행 엔드포인트는 동기로 둔다 (작업 큐 없음) | 채택 | 04 |
+| [0020](0020-static-single-page-ui.md) | UI는 API만 호출하는 정적 HTML 한 장 (빌드 없음) | 채택 | 04 |
+| [0021](0021-end-to-end-run.md) | 단계별 명령은 두고, 한 번에 실행하는 `run`을 위에 얹는다 | 채택 | 04 |
 
 ## 템플릿
 

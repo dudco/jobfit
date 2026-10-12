@@ -5,8 +5,8 @@ import pytest
 from preprocessing.criteria import criteria_dir, save_criteria
 from scoring.candidate import Candidate
 from scoring.judge import LLMJudgeOutput, LLMJudgment
-from scoring.result import load_result
-from scoring.service import applicable, match, target_positions
+from scoring.result import Weights, load_result
+from scoring.service import applicable, match, rescore, target_positions
 from settings import Settings
 
 from .fakes import FakeLLM
@@ -138,3 +138,29 @@ def test_unseen_job_family_with_years_rule(tmp_path):
     result = match("77", settings(tmp_path), llm=FakeLLM(structured=[out]), candidates_dir=d, log=quiet)
     j = result.candidates[0].best.judgments[0]
     assert (j.status, j.rule, result.candidates[0].score) == ("unmet", "experience_years", 0)   # 1년/2년 < 0.6
+
+
+def test_saved_result_is_reused_only_for_the_same_criteria(tmp_path):
+    write_criteria(tmp_path, make_criteria(REQS))
+    d = write_candidates(tmp_path, person("a", ["야간근무 가능"]))
+    match("55", settings(tmp_path), llm=FakeLLM(structured=[by_declaration]), candidates_dir=d, log=quiet)
+    crit = make_criteria(REQS)
+    crit.extracted_at = "t2"                             # 다시 추출된 조건
+    write_criteria(tmp_path, crit)
+    llm = FakeLLM(structured=[by_declaration])
+    result = match("55", settings(tmp_path), llm=llm, candidates_dir=d, log=quiet)
+    assert llm.calls and result.posting.criteria_extracted_at == "t2"
+
+
+def test_rescore_changes_ranking_without_llm(tmp_path):
+    write_criteria(tmp_path, make_criteria(REQS))
+    d = write_candidates(tmp_path, person("a", ["야간근무 가능"]), person("b", ["인근거주", "야간근무 불가"]))
+    result = match("55", settings(tmp_path), llm=FakeLLM(structured=[by_declaration] * 2), candidates_dir=d,
+                   log=quiet)
+    assert [c.candidate_id for c in result.candidates] == ["a", "b"]           # a 85, b (0+0.3)·0.8=24
+    again = rescore(result, Weights(must_share=0.0, gate=1.0))                  # 우대만 본다
+    assert [c.candidate_id for c in again.candidates] == ["b", "a"]
+    assert again.weights.must_share == 0.0 and [c.rank for c in again.candidates] == [1, 2]
+    for c in again.candidates:
+        assert sum(j.contribution for j in c.best.judgments) == pytest.approx(c.raw)
+    assert load_result(tmp_path / "data", "saramin", "55") == result           # 저장본은 그대로

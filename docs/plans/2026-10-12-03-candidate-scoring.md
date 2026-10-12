@@ -1490,7 +1490,7 @@ Run: `pytest -q` → PASS. 커밋 `feat(cli): match·result 명령`
 
 ### Task 11: 실제 실행·실험 [수동 — OPENAI_API_KEY 필요]
 
-- [ ] **Step 1: 첫 실행 (교차 평가 포함)**
+- [x] **Step 1: 첫 실행 (교차 평가 포함)**
 
 ```bash
 uv pip install -e ".[dev]"
@@ -1500,7 +1500,7 @@ jobfit result 55162188 --candidate orion-partial-3
 ```
 확인: 의도 순서 ✓, 구간 이탈, 의도 판정 일치, `quote_not_found`·`no_evidence` 플래그.
 
-- [ ] **Step 2: 실험 Y1 — 판정 모델**
+- [x] **Step 2: 실험 Y1 — 판정 모델** (보정 전 결과·진단은 스펙 03 11장, 보정은 Task 13)
 
 ```bash
 JOBFIT_JUDGE_MODEL=gpt-4.1-mini jobfit match 55189170 55162188 --refresh
@@ -1512,6 +1512,25 @@ JOBFIT_JUDGE_MODEL=gpt-4.1-mini jobfit match 55189170 55162188 --refresh
 - [ ] **Step 4: 실험 Y3 — 교차 평가**: 같은 실행 결과에서 "(타 공고)" 지원자의 점수 분포를 기록한다.
 
 - [ ] **Step 5: 캐시 확인**: `jobfit match 55189170 55162188 --refresh` 재실행 → API 호출 0회 (키 없이도 완료).
+
+---
+
+### Task 13: 실험 Y1 결과에 따른 보정
+
+진단: 스펙 03 11장 실험 Y1 표. 판정에 필요한 공고 맥락(근무지·평가 모집분야)이 프롬프트에 없었고, partial/unmet/unknown 경계가 모호했다.
+
+- [x] **Step 1: 판정 프롬프트에 공고 맥락 (TDD)** — `tests/test_judge.py::test_prompt_gives_workplace_and_evaluated_positions_as_context` → FAIL 확인 → `judge.context_lines()`(근무지, 평가 모집분야 이름·직무·근무지), `build_prompt(..., positions)`, 서비스가 평가 분야를 넘김 → PASS
+- [x] **Step 2: 판정 규칙 명확화** — `JUDGE_SYSTEM`: partial은 경력·경험·기술의 정도 차이에만, 목록·기한 요건은 unmet, 학력란이 있는데 요구 전공이 없으면 unmet, 거주 요건은 근무지 기준, 대상 조건은 평가 모집분야로. 공고 고유 단어 없이 일반 규칙으로
+- [x] **Step 3: 의도가 모호한 목업 2건 수정** — soil-perfect-2 병역 "비대상 (병역 의무 없음)", orion-partial-1 경험을 마트 아르바이트로
+- [ ] **Step 4: 재실행 [수동 — API]**
+
+```bash
+jobfit match 55189170 55162188 --refresh
+JOBFIT_JUDGE_MODEL=gpt-4.1-mini jobfit match 55189170 55162188 --refresh
+```
+프롬프트가 바뀌어 캐시가 맞지 않으므로 판정을 다시 호출한다 (모델당 24회).
+
+- [ ] **Step 5: 판정 모델 결정과 기록** → Task 12
 
 ---
 

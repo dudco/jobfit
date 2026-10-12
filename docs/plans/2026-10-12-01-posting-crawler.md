@@ -1041,18 +1041,18 @@ git commit -m "feat(cli): jobfit crawl / jobfit postings"
 - Create: `tests/fixtures/saramin_detail_real.html`
 - Modify: `tests/test_saramin.py`, (필요 시) `src/crawler/saramin.py`, `docs/adr/0004-crawl-detail-iframe-over-http.md`, 스펙 9장
 
-- [ ] **Step 1: 공고 A 고르기**
+- [x] **Step 1: 공고 A 고르기**
 
 사람인에서 **본문이 거의 이미지인** 공고를 고른다. 자격요건·우대사항이 이미지 안에 있고, 회사 고유 용어가 적은 범용 직무(권장: 사무직).
 
-- [ ] **Step 2: 수집 시도**
+- [x] **Step 2: 수집 시도**
 
 ```bash
 jobfit crawl "<공고 A URL>"
 ```
 기대 결과: `<rec_idx>  이미지 N장  이미지 공고  <제목>` (N ≥ 1)
 
-- [ ] **Step 3: 결과별 대응**
+- [x] **Step 3: 결과별 대응**
 
 | 결과 | 의미 | 조치 |
 |---|---|---|
@@ -1063,7 +1063,7 @@ jobfit crawl "<공고 A URL>"
 
 상수를 고칠 때는 TDD로: 먼저 Step 4의 실제 HTML 테스트를 추가해 실패를 확인한 뒤 고친다. 고친 뒤 `jobfit crawl "<URL>" --refresh`.
 
-- [ ] **Step 4: 실제 HTML을 회귀 fixture로**
+- [x] **Step 4: 실제 HTML을 회귀 fixture로**
 
 ```bash
 mkdir -p tests/fixtures
@@ -1089,12 +1089,12 @@ def test_real_detail_html_is_image_posting():
 Run: `pytest tests/test_saramin.py -v`
 Expected: 12 passed
 
-- [ ] **Step 5: 기록**
+- [x] **Step 5: 기록**
 
 - 스펙 9장 표의 H1–H4 행 (공고 A)
 - 가정이 틀려 상수를 고쳤다면 ADR-0004의 "결정"과 상태 갱신
 
-- [ ] **Step 6: 커밋**
+- [x] **Step 6: 커밋**
 
 ```bash
 git add tests src/crawler docs
@@ -1109,11 +1109,11 @@ git commit -m "test(crawler): 실제 사람인 상세 HTML로 사이트 가정(H
 - Create: `data/postings/saramin/<A>/…`, `data/postings/saramin/<B>/…` (로컬 전용, [ADR-0007](../adr/0007-data-not-versioned.md))
 - Modify: 스펙 9장, `docs/README.md`
 
-- [ ] **Step 1: 공고 B 고르기**
+- [x] **Step 1: 공고 B 고르기** (55189170 — 단, 직군 재검토 중: 스펙 9장 "열린 문제")
 
 A와 **다른 직군**의 이미지형 공고 (권장: 현장·기술직 — 생산, 품질, 물류 등).
 
-- [ ] **Step 2: 수집과 재사용 확인**
+- [x] **Step 2: 수집과 재사용 확인**
 
 ```bash
 jobfit crawl "<공고 B URL>"
@@ -1122,14 +1122,14 @@ jobfit postings
 ```
 Expected: 두 공고 모두 `이미지 공고 = 예`
 
-- [ ] **Step 3: 이미지 확인 [수동]**
+- [x] **Step 3: 이미지 확인 [수동]**
 
 `data/postings/saramin/<ID>/images/`를 열어:
 - [ ] 공고 본문 포스터가 빠짐없이 순서대로 있다
 - [ ] 로고·배너 같은 비본문 이미지가 섞이지 않았다
 - [ ] `skipped_images`에 본문 포스터가 없다
 
-- [ ] **Step 4: 관찰 기록**
+- [x] **Step 4: 관찰 기록**
 
 매니페스트에서 수치를 뽑아 스펙 9장 표를 채운다:
 

@@ -22,6 +22,6 @@
 
 | # | 단계 | 스펙 | 계획 | 상태 |
 |---|---|---|---|---|
-| 01 | 공고 이미지 수집 | [spec](specs/2026-10-12-01-posting-crawler-design.md) | [plan](plans/2026-10-12-01-posting-crawler.md) | 구현 중 — Task 1–8 완료, 9–10(실제 사이트 검증) 남음 |
+| 01 | 공고 이미지 수집 | [spec](specs/2026-10-12-01-posting-crawler-design.md) | [plan](plans/2026-10-12-01-posting-crawler.md) | 구현 완료 — 공고 선정 재검토 중 |
 | 02 | 이미지 전처리·구조화 | — | — | 01 완료 후 작성 |
 | 03 | 스코어링 | — | — | 02 완료 후 작성 |

@@ -41,3 +41,55 @@ def test_postings_lists_saved_snapshots(monkeypatch, tmp_path):
     result = CliRunner().invoke(cli.app, ["postings"])
     assert result.exit_code == 0, result.output
     assert "111" in result.output and "회계팀" in result.output
+
+
+from preprocessing import service as preprocessing_service
+from preprocessing.criteria import (
+    CriteriaSource, EvidenceRef, PostingCriteria, Position, Requirement, criteria_dir, save_criteria,
+)
+
+
+def sample_criteria():
+    return PostingCriteria(
+        source=CriteriaSource(site="saramin", posting_id="55", snapshot_fetched_at="t0", image_sha256=["a"]),
+        extracted_at="t1", models={"transcribe": "v", "structure": "t"},
+        title="생산직 채용", job_family="식품 생산", positions=[Position(name="생산직")],
+        requirements=[
+            Requirement(id="r1", text="고졸 이상", normalized="고졸", priority="must", category="education",
+                        evidence=EvidenceRef(quote="- 고졸 이상", image_index=0, slice_index=0)),
+            Requirement(id="r2", text="보훈", normalized="보훈", priority="preferred", category="other",
+                        sensitive=True, evidence=EvidenceRef(quote="- 보훈"), flags=["quote_not_found"]),
+        ],
+        suitable=True, warnings=["근거 인용을 전사에서 찾지 못함: r2"],
+    )
+
+
+def test_extract_command_uses_cached_llm_and_prints_summary(monkeypatch, tmp_path):
+    monkeypatch.setenv("JOBFIT_DATA_DIR", str(tmp_path))
+    seen = []
+
+    def fake_extract(ref, settings, *, llm, refresh, log):
+        seen.append((ref, refresh, type(llm).__name__, settings.data_dir))
+        return sample_criteria()
+
+    monkeypatch.setattr(preprocessing_service, "extract", fake_extract)
+    result = CliRunner().invoke(cli.app, ["extract", "55", "--refresh"])
+    assert result.exit_code == 0, result.output
+    assert seen == [("55", True, "CachedLLM", tmp_path)]
+    assert "55  요건 2개 (필수 1, 우대 1)  모집분야 1  ⚠ 1  생산직 채용" in result.output
+
+
+def test_criteria_command_shows_requirements_and_warnings(monkeypatch, tmp_path):
+    monkeypatch.setenv("JOBFIT_DATA_DIR", str(tmp_path))
+    save_criteria(criteria_dir(tmp_path, "saramin", "55"), sample_criteria())
+    result = CliRunner().invoke(cli.app, ["criteria", "55"])
+    assert result.exit_code == 0, result.output
+    for text in ("r1", "고졸 이상", "img0/slice0", "r2", "⚠ 근거 인용을 전사에서 찾지 못함: r2"):
+        assert text in result.output
+
+
+def test_criteria_command_without_result_exits_1(monkeypatch, tmp_path):
+    monkeypatch.setenv("JOBFIT_DATA_DIR", str(tmp_path))
+    result = CliRunner().invoke(cli.app, ["criteria", "55"])
+    assert result.exit_code == 1
+    assert "jobfit extract 55" in result.output

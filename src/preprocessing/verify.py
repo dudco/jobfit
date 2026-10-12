@@ -14,6 +14,8 @@ from .structure import LLMRequirement, StructuredPosting
 from .transcribe import slice_at
 
 MAX_REQUIREMENTS = 30
+ABSENCE = re.compile(r"무관")       # "경력 무관", "전공무관" — 조건이 없음을 뜻함
+PREFERENCE = re.compile(r"우대")     # "전공무관(상경계열 우대)"처럼 우대가 붙으면 요건으로 남긴다
 
 
 def _compact(text: str) -> str:
@@ -44,6 +46,11 @@ def dedupe(requirements: list[LLMRequirement]) -> list[LLMRequirement]:
     return list(merged.values())
 
 
+def means_no_condition(text: str) -> bool:
+    """'경력 무관'처럼 조건이 없음을 뜻하는 문구인가. 프롬프트로도 막지만 코드로 한 번 더 거른다."""
+    return bool(ABSENCE.search(text)) and not PREFERENCE.search(text)
+
+
 def warnings_for(requirements: list[Requirement]) -> list[str]:
     if not requirements:
         return ["요건이 0개 — 이미지에 자격요건이 없는 공고(안내 배너 등)일 수 있음"]
@@ -55,21 +62,33 @@ def warnings_for(requirements: list[Requirement]) -> list[str]:
     missing = [r.id for r in requirements if "quote_not_found" in r.flags]
     if missing:
         warnings.append(f"근거 인용을 전사에서 찾지 못함: {', '.join(missing)}")
+    unknown = [r.id for r in requirements if "unknown_position" in r.flags]
+    if unknown:
+        warnings.append(f"모집분야 목록에 없는 분야를 가리키는 요건: {', '.join(unknown)}")
     return warnings
 
 
 def build_criteria(out: StructuredPosting, transcript: str, *, source: CriteriaSource,
                    models: dict[str, str], extracted_at: str) -> PostingCriteria:
+    candidates = dedupe(out.requirements)
+    dropped = [r.text for r in candidates if means_no_condition(r.text)]
+    known_positions = {p.name for p in out.positions}
     requirements: list[Requirement] = []
-    for i, r in enumerate(dedupe(out.requirements), start=1):
+    for i, r in enumerate((r for r in candidates if not means_no_condition(r.text)), start=1):
         offset = find_quote(r.quote, transcript)
         image_index, slice_index = slice_at(transcript, offset) if offset is not None else (None, None)
+        flags = [] if offset is not None else ["quote_not_found"]
+        if known_positions and any(p not in known_positions for p in r.positions):
+            flags.append("unknown_position")
         requirements.append(Requirement(
             id=f"r{i}", text=r.text, normalized=r.normalized, priority=r.priority, category=r.category,
             positions=r.positions, min_years=r.min_years, min_education=r.min_education, sensitive=r.sensitive,
             evidence=EvidenceRef(quote=r.quote, image_index=image_index, slice_index=slice_index),
-            flags=[] if offset is not None else ["quote_not_found"],
+            flags=flags,
         ))
+    warnings = warnings_for(requirements)
+    if dropped:
+        warnings.append(f"조건이 없음을 뜻하는 문구 제외: {', '.join(dropped)}")
     return PostingCriteria(
         source=source, extracted_at=extracted_at, models=models,
         title=out.title, company=out.company, job_family=out.job_family,
@@ -77,5 +96,5 @@ def build_criteria(out: StructuredPosting, transcript: str, *, source: CriteriaS
         requirements=requirements,
         conditions=Conditions(**out.conditions.model_dump()),
         suitable=bool(requirements),
-        warnings=warnings_for(requirements),
+        warnings=warnings,
     )

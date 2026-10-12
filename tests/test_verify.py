@@ -77,3 +77,20 @@ def test_carries_sensitive_positions_and_conditions():
     assert c.positions[0].name == "생산직" and c.positions[0].duties == "배합/성형/포장"
     assert (c.conditions.employment_type, c.conditions.locations) == ("정규직", ["청주"])
     assert (c.title, c.company, c.job_family, c.source.posting_id) == ("생산직 채용", "OO", "식품 생산", "55")
+
+
+def test_phrases_meaning_no_condition_are_dropped():
+    c = build([
+        llm_req("경력 무관", quote="- 고등학교 졸업 이상"),
+        llm_req("전공무관(상경계열 우대)", "preferred", "education", quote="- 고등학교 졸업 이상"),  # 우대 부분은 요건
+        llm_req("고등학교 졸업 이상", category="education", quote="- 고등학교 졸업 이상"),
+    ])
+    assert [(r.id, r.text) for r in c.requirements] == [("r1", "전공무관(상경계열 우대)"), ("r2", "고등학교 졸업 이상")]
+    assert c.warnings == ["조건이 없음을 뜻하는 문구 제외: 경력 무관"]
+
+
+def test_requirement_positions_must_name_known_positions():
+    c = build([llm_req("화공 전공", category="education", quote="- 고등학교 졸업 이상", positions=["공정", "없는분야"])],
+              positions=[LLMPosition(name="공정", group=None, duties=None, location=None)])
+    assert c.requirements[0].flags == ["unknown_position"]
+    assert c.warnings == ["모집분야 목록에 없는 분야를 가리키는 요건: r1"]

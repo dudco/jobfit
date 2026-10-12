@@ -4,7 +4,7 @@
 
 ```
 ① 수집 (crawler)  →  ② 전처리·구조화 (preprocessing)  →  ③ 스코어링 (scoring)
-     구현됨                     구현됨                       구현됨 (실험 중)
+     구현됨                     구현됨                       구현됨
 ```
 
 전체 구조는 [`docs/architecture.md`](docs/architecture.md), 설계 문서·결정 기록은 [`docs/`](docs/README.md)에 있다.

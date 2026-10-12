@@ -15,7 +15,7 @@ DEFAULT_UA = (
 )
 DEFAULT_VISION_MODEL = "gpt-4.1"      # 스펙 02 실험 X2로 확정 (ADR-0010)
 DEFAULT_TEXT_MODEL = "gpt-4.1"   # 스펙 02 실험 X2: mini는 유의사항의 우대 문구를 놓침
-DEFAULT_JUDGE_MODEL = "gpt-4.1"  # 지원자 판정 (스펙 03)
+DEFAULT_JUDGE_MODEL = "gpt-4.1"  # 지원자 판정 — 스펙 03 실험 Y1: mini는 근거 없는 추론·인용을 만듦
 
 
 @dataclass(frozen=True)

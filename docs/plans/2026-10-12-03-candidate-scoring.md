@@ -1507,11 +1507,11 @@ JOBFIT_JUDGE_MODEL=gpt-4.1-mini jobfit match 55189170 55162188 --refresh
 ```
 기록: 모델별 의도 판정 일치율, 인용 검증 실패 수, 순서·구간. 일치율 차이가 없으면 경량.
 
-- [ ] **Step 3: 실험 Y2 — 수용 기준**: 스펙 03 10장. 미달이면 원인을 (판정 프롬프트 / 이력서 표현 / 점수 상수 / 의도 자체)로 분류해 고치고 다시 잰다. 점수 상수를 바꾸면 ADR-0017에 기록.
+- [x] **Step 3: 실험 Y2 — 수용 기준**: 스펙 03 10장. 미달이면 원인을 (판정 프롬프트 / 이력서 표현 / 점수 상수 / 의도 자체)로 분류해 고치고 다시 잰다. 점수 상수를 바꾸면 ADR-0017에 기록.
 
-- [ ] **Step 4: 실험 Y3 — 교차 평가**: 같은 실행 결과에서 "(타 공고)" 지원자의 점수 분포를 기록한다.
+- [x] **Step 4: 실험 Y3 — 교차 평가**: 같은 실행 결과에서 "(타 공고)" 지원자의 점수 분포를 기록한다.
 
-- [ ] **Step 5: 캐시 확인**: `jobfit match 55189170 55162188 --refresh` 재실행 → API 호출 0회 (키 없이도 완료).
+- [x] **Step 5: 캐시 확인**: `jobfit match 55189170 55162188 --refresh` 재실행 → API 호출 0회 (키 없이도 완료).
 
 ---
 
@@ -1534,14 +1534,14 @@ JOBFIT_JUDGE_MODEL=gpt-4.1-mini jobfit match 55189170 55162188 --refresh
   - `test_judgment_schema_puts_evidence_and_reason_before_status` → FAIL → `LLMJudgment` 필드 순서를 quotes → reason → status로 → PASS
   - `test_quote_label_punctuation_is_ignored` → FAIL → `scoring.verify._found()`가 대괄호·콜론 무시 → PASS
   - 프롬프트: 거주 규칙 "구·읍·면이 달라도 같은 시·군이면 met", "사유와 일치하는 상태를 고른다"
-- [ ] **Step 6: 3차 실행 [수동 — API]** — Step 4와 같은 명령 (스키마·프롬프트가 바뀌어 다시 호출)
-- [ ] **Step 7: 판정 모델 결정과 기록** → Task 12
+- [x] **Step 6: 3차 실행 [수동 — API]** — Step 4와 같은 명령 (스키마·프롬프트가 바뀌어 다시 호출)
+- [x] **Step 7: 판정 모델 결정과 기록** → Task 12 (gpt-4.1 유지)
 
 ---
 
 ### Task 12: 기록
 
-- [ ] 스펙 03 11장 (Y1–Y3 표, 진단), 10장 체크
-- [ ] ADR-0017 상수 보정 결과, 판정 모델 기본값 (`DEFAULT_JUDGE_MODEL`)
-- [ ] `docs/README.md` 진행 현황, `docs/architecture.md` 단계 표·데이터 디렉터리(`results/`)
-- [ ] 커밋 `docs: 스펙 03 실험 결과와 스코어링 기본값 확정`
+- [x] 스펙 03 11장 (Y1–Y3 표, 진단), 10장 체크
+- [x] ADR-0017 상수 보정 결과, 판정 모델 기본값 (`DEFAULT_JUDGE_MODEL`)
+- [x] `docs/README.md` 진행 현황, `docs/architecture.md` 단계 표·데이터 디렉터리(`results/`)
+- [x] 커밋 `docs: 스펙 03 실험 결과와 스코어링 기본값 확정`

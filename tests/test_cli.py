@@ -181,3 +181,14 @@ def test_run_command_runs_pipeline_and_prints_ranking(monkeypatch, tmp_path):
     assert result.exit_code == 0, result.output
     assert seen == [("55", True, "CachedLLM")]
     assert "c1" in result.output and "70" in result.output
+
+
+def test_serve_command_starts_uvicorn_with_app(monkeypatch, tmp_path):
+    import uvicorn
+
+    monkeypatch.setenv("JOBFIT_DATA_DIR", str(tmp_path))
+    seen = []
+    monkeypatch.setattr(uvicorn, "run", lambda app, host, port: seen.append((type(app).__name__, host, port)))
+    result = CliRunner().invoke(cli.app, ["serve", "--port", "8123"])
+    assert result.exit_code == 0, result.output
+    assert seen == [("FastAPI", "127.0.0.1", 8123)]

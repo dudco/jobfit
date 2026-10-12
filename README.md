@@ -4,7 +4,6 @@
 
 ```
 ① 수집 (crawler)  →  ② 전처리·구조화 (preprocessing)  →  ③ 스코어링 (scoring)
-     구현됨                     구현됨                       구현됨
 ```
 
 전체 구조는 [`docs/architecture.md`](docs/architecture.md), 설계 문서·결정 기록은 [`docs/`](docs/README.md)에 있다.
@@ -45,8 +44,46 @@ jobfit --help
 | `JOBFIT_SLICE_HEIGHT` | `1200` | 긴 이미지를 자르는 목표 높이(px). `0`이면 자르지 않음 |
 | `JOBFIT_MAX_WIDTH` | `1000` | 이보다 넓은 이미지는 축소 |
 | `JOBFIT_JUDGE_MODEL` | `gpt-4.1` | 지원자 판정 모델 (`match`) |
+| `JOBFIT_CANDIDATES_DIR` | `<레포>/dataset/candidates` | 지원자 JSON 디렉터리 |
 
 ## 사용법
+
+### 한 번에 실행 — `jobfit run`
+
+```bash
+jobfit run "https://www.saramin.co.kr/zf_user/jobs/relay/view?rec_idx=55162188"   # 수집 → 조건 추출 → 매칭
+jobfit run 55189170 55162188 --refresh     # 매칭만 다시 (수집·추출 결과는 재사용)
+```
+
+공고 URL(또는 rec_idx) 하나로 아래 1·3·6단계를 차례로 실행하고 랭킹을 보여준다. 이미 처리한 단계는 저장된 결과와 LLM 캐시를 재사용하므로 두 번째 실행부터는 API 호출이 없다. 단계별 명령은 아래에 있다.
+
+### 화면 — `jobfit serve`
+
+```bash
+jobfit serve                  # http://127.0.0.1:8000  (API 문서: /docs)
+jobfit serve --port 8080
+```
+
+- 공고 탭 → 추출된 조건(필수·우대·법정 우대·근무조건). 요건의 **원본**을 누르면 그 요건이 나온 공고 이미지 조각과 인용 문구
+- 랭킹 → 지원자를 누르면 요건별 판정(충족 / 부분 / 미충족 / **확인 필요** / 해당 없음), 이력서 인용, 기여 점수, 인용된 이력서 줄 강조
+- 가중치 슬라이더 → 저장된 판정으로 점수만 다시 계산해 즉시 재랭킹 (LLM 호출 없음, 저장 안 함)
+- 입력창에 공고 URL을 넣고 실행 (처음 처리하는 공고는 1~2분)
+- 목업의 의도 라벨은 "평가용 의도 라벨 표시"를 켤 때만 보인다
+
+### API
+
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| POST | `/api/run` | `{ref, refresh}` — 수집 → 추출 → 매칭 한 번에 |
+| GET | `/api/postings` | 추출된 공고 목록 (매칭 여부 포함) |
+| GET | `/api/postings/{id}/criteria` | 추출된 조건 |
+| GET | `/api/postings/{id}/slices/{n}` | 근거 위치의 공고 이미지 조각 (PNG) |
+| GET | `/api/postings/{id}/result` | 매칭 결과 (랭킹 + 요건별 근거) |
+| POST | `/api/postings/{id}/match` | `{refresh}` — 매칭 실행 |
+| POST | `/api/postings/{id}/rescore` | 가중치만 바꿔 재집계 (LLM 호출 없음, 저장 안 함) |
+| GET | `/api/candidates` | 지원자 목록과 판정에 쓰인 이력서 원문 |
+
+오류는 400(입력·조건 문제, 메시지 포함), 404(결과 없음), 502(사람인·OpenAI 오류).
 
 ### 1. 공고 수집 — `jobfit crawl`
 
@@ -194,7 +231,10 @@ pytest
 
 ```
 src/
-  cli.py              jobfit 명령 (crawl, postings, extract, criteria, evaluate, match, result, models)
+  cli.py              jobfit 명령 (run, serve, crawl, postings, extract, criteria, evaluate, match, result, models)
+  api.py              HTTP API (FastAPI) — 서비스 호출만
+  pipeline.py         수집 → 추출 → 매칭 한 번에 실행
+  web/index.html      UI (정적 HTML 한 장, API만 호출)
   settings.py         환경변수 설정
   llm.py              LLM 프로토콜, OpenAI 구현, 응답 캐시
   crawler/

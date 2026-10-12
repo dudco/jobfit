@@ -105,6 +105,20 @@ def criteria(ref: str = typer.Argument(..., help="rec_idx 또는 URL")):
 
 
 @app.command()
+def serve(
+    host: str = typer.Option("127.0.0.1", "--host", help="바인드 주소"),
+    port: int = typer.Option(8000, "--port", help="포트"),
+):
+    """API와 UI를 띄운다 — 브라우저에서 http://{host}:{port} (API 문서: /docs)"""
+    import uvicorn
+
+    from api import create_app
+
+    console.print(f"jobfit — http://{host}:{port}  (API 문서: /docs)")
+    uvicorn.run(create_app(load_settings()), host=host, port=port)
+
+
+@app.command()
 def models():
     """현재 API 키로 사용 가능한 모델 목록 (OPENAI_API_KEY 필요)."""
     load_settings()  # .env 로드

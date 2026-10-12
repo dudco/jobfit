@@ -133,6 +133,42 @@ def criteria(ref: str = typer.Argument(..., help="rec_idx 또는 URL")):
         console.print(f"[yellow]⚠ {warning}[/yellow]")
 
 
+@app.command("experiment-jev")
+@_friendly
+def experiment_jev(
+    refs: List[str] = typer.Argument(..., help="rec_idx (기준 매칭 결과가 있어야 함)"),
+    thresholds: str = typer.Option("0.5,0.6,0.7,0.8,0.9", "--thresholds", help="단계식 판정 확신도 기준"),
+):
+    """[실험] 판단 전용 모델(JEV) 판정을 기준(gpt-4.1)·목업 의도와 비교 (스펙 06). TYPESAFE_API_KEY 필요."""
+    from scoring.experiment_jev import run_experiment
+    from scoring.jev import CachedJev, real_client
+
+    settings = load_settings()
+    jev = CachedJev(real_client, settings.jev_cache_dir, model=settings.jev_model)
+    ts = [float(x) for x in thresholds.split(",")]
+    for ref in refs:
+        r = run_experiment(parse_rec_idx(ref), settings, jev=jev, thresholds=ts, log=_log)
+        console.rule(f"{r['posting_id']}  JEV {', '.join(r['jev_model'])}")
+        console.print(f"판정 {r['judgments']}개 · 기준(gpt)과 일치 {r['agree_with_gpt']:.0%} · 점수 순위 상관 "
+                      f"{r['spearman_vs_gpt']:.2f} · 근거 없는 판정 {r['jev']['no_evidence']} · "
+                      f"확신도 중앙값 {r['confidence_median']:.2f}")
+        for name in ("gpt", "jev"):
+            e = r[name]
+            console.print(f"  {name:>3}: 의도 순서 {'✓' if e['order_ok'] else '✗'} · 구간 이탈 {len(e['out_of_range'])} · "
+                          f"의도 판정 일치 {e['expected'][0]}/{e['expected'][1]}")
+        console.print(f"  JEV 비용 ${r['jev_cost_usd']:.5f} (입력 {r['input_tokens']:,} 토큰) · "
+                      f"응답 중앙값 {r['latency_s_median']}s")
+        table = Table("확신도 기준", "gpt로 넘김", "기준과 일치", "의도 판정 일치", "추정 비용")
+        for c in r["cascade"]:
+            table.add_row(f"{c['threshold']:.2f}", f"{c['escalated']}/{c['candidates']}명",
+                          f"{c['agree_with_gpt']:.0%}", f"{c['expected_agreed']}/{c['expected_total']}",
+                          f"${c['cost_usd']:.3f}")
+        console.print(table)
+        for dis in r["disagreements"][:12]:
+            console.print(f"  [dim]{escape(dis['candidate'])} · {escape(dis['requirement'][:30])} — "
+                          f"gpt {dis['gpt']} / jev {dis['jev']} ({dis['confidence']})[/dim]")
+
+
 @app.command()
 def serve(
     host: str = typer.Option("127.0.0.1", "--host", help="바인드 주소"),

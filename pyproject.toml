@@ -20,6 +20,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+jev = ["typesafe-sdk>=0.7"]   # 판단 전용 모델 실험 (스펙 06)
 
 [project.scripts]
 jobfit = "cli:app"

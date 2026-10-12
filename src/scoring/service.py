@@ -55,7 +55,9 @@ def posting_notes(criteria: PostingCriteria, derived: list[Requirement]) -> list
 
 
 def score_candidate(llm: LLM, criteria: PostingCriteria, candidate: Candidate, *, model: str, today: str,
-                    weights: Weights) -> CandidateScore:
+                    weights: Weights, judge_fn: Optional[Callable] = None) -> CandidateScore:
+    """judge_fn(criteria, candidate, requirements, positions) -> LLMJudgeOutput — 판정 방식을 바꿔 끼우는 자리
+    (스펙 06 판단 전용 모델 실험). 없으면 LLM 판정."""
     positions = target_positions(criteria, candidate)
     extra = derived_requirements(criteria)
     order = [*criteria.requirements, *extra]
@@ -65,7 +67,10 @@ def score_candidate(llm: LLM, criteria: PostingCriteria, candidate: Candidate, *
             union.setdefault(r.id, r)
     reqs = sorted(union.values(), key=order.index)
     named = [p for p in positions if p is not None]
-    out = judge(llm, criteria, candidate, reqs, model=model, positions=named or None)   # 지원자당 1회
+    if judge_fn is not None:
+        out = judge_fn(criteria, candidate, reqs, named or None)
+    else:
+        out = judge(llm, criteria, candidate, reqs, model=model, positions=named or None)   # 지원자당 1회
     judged = {j.requirement_id: j for j in judge_requirements(out, reqs, candidate, today=today)}
     per_position = [aggregate([judged[r.id] for r in applicable(criteria, p, extra)], p, weights) for p in positions]
     excluded = [r.text for r in criteria.requirements if r.sensitive]

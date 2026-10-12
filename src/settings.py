@@ -29,10 +29,15 @@ class Settings:
     max_width: int = 1000              # 이보다 넓은 이미지는 비율 유지 축소
     judge_model: str = DEFAULT_JUDGE_MODEL
     candidates_dir: Path = ROOT / "dataset" / "candidates"   # 지원자 JSON (이력서 전처리 결과)
+    jev_model: str = "jev-latest"      # 판단 전용 모델 실험 (스펙 06)
 
     @property
     def llm_cache_dir(self) -> Path:
         return self.data_dir / "cache" / "llm"
+
+    @property
+    def jev_cache_dir(self) -> Path:
+        return self.data_dir / "cache" / "jev"
 
 
 def load_settings(*, dotenv_path: Optional[Path] = ROOT / ".env") -> Settings:
@@ -49,4 +54,5 @@ def load_settings(*, dotenv_path: Optional[Path] = ROOT / ".env") -> Settings:
         max_width=int(env("JOBFIT_MAX_WIDTH", "1000")),
         judge_model=env("JOBFIT_JUDGE_MODEL", DEFAULT_JUDGE_MODEL),
         candidates_dir=Path(env("JOBFIT_CANDIDATES_DIR", str(ROOT / "dataset" / "candidates"))),
+        jev_model=env("JOBFIT_JEV_MODEL", "jev-latest"),
     )

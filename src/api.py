@@ -17,6 +17,7 @@ import pipeline
 from flags import FLAGS
 from crawler.saramin import parse_rec_idx
 from crawler.service import SITE
+from crawler.snapshot import list_snapshots
 from llm import LLM, cached_openai
 from preprocessing.criteria import PostingCriteria, criteria_dir, list_criteria, load_criteria
 from scoring import service as scoring_service
@@ -47,6 +48,15 @@ class CandidateView(BaseModel):
     lines: list[str]                  # render_lines() — 판정 LLM이 본 그대로 (줄 번호 = 인덱스 + 1)
     target_posting: Optional[str]     # 평가용 (meta)
     label: Optional[str]              # 평가용 (meta)
+
+
+class ExcludedPosting(BaseModel):
+    """처리하지 않은(평가할 수 없는) 공고 — 기본 화면에서 숨기고 /excluded에서만 보인다."""
+    posting_id: str
+    title: Optional[str]
+    url: Optional[str]
+    reason: str
+    fetched_at: Optional[str]
 
 
 class MatchRequest(BaseModel):
@@ -99,6 +109,8 @@ def create_app(settings: Optional[Settings] = None, llm: Optional[LLM] = None) -
     def postings():
         out = []
         for c in list_criteria(settings.data_dir):
+            if not c.suitable:                     # 평가할 수 없는 공고는 /api/excluded로
+                continue
             res = load_result(settings.data_dir, SITE, c.source.posting_id)
             must = sum(r.priority == "must" for r in c.requirements)
             out.append(PostingSummary(
@@ -106,6 +118,33 @@ def create_app(settings: Optional[Settings] = None, llm: Optional[LLM] = None) -
                 requirements=len(c.requirements), must=must, preferred=len(c.requirements) - must,
                 positions=len(c.positions), suitable=c.suitable, matched_at=res.matched_at if res else None))
         return out
+
+    @app.get("/api/excluded", response_model=list[ExcludedPosting])
+    def excluded():
+        """본문 이미지가 없거나(텍스트 공고) 요건을 추출하지 못한 공고와 그 이유."""
+        criteria_by_id = {c.source.posting_id: c for c in list_criteria(settings.data_dir)}
+        out, seen = [], set()
+        for snap in list_snapshots(settings.data_dir):
+            pid, c = snap.source.posting_id, criteria_by_id.get(snap.source.posting_id)
+            if not snap.images:
+                reason = (f"본문 이미지가 없음 (본문 텍스트 {snap.body_text_length}자) — "
+                          "조건은 공고 이미지에서만 추출하므로 처리하지 않음")
+            elif c is not None and not c.suitable:
+                reason = "; ".join(c.warnings) or "추출된 요건 없음"
+            else:
+                continue                            # 정상 공고 또는 아직 추출 전
+            seen.add(pid)
+            out.append(ExcludedPosting(posting_id=pid, title=snap.title, url=snap.source.url, reason=reason,
+                                       fetched_at=snap.fetched_at))
+        for pid, c in criteria_by_id.items():       # 스냅샷 없이 조건만 남은 경우
+            if not c.suitable and pid not in seen:
+                out.append(ExcludedPosting(posting_id=pid, title=c.title or None, url=None,
+                                           reason="; ".join(c.warnings) or "추출된 요건 없음", fetched_at=None))
+        return out
+
+    @app.get("/excluded", include_in_schema=False)
+    def excluded_page():
+        return FileResponse(WEB_DIR / "excluded.html", media_type="text/html")
 
     @app.get("/api/postings/{posting_id}/criteria", response_model=PostingCriteria)
     def criteria(posting_id: str):

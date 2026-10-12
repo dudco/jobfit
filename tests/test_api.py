@@ -94,3 +94,30 @@ def test_flags_endpoint_explains_codes(tmp_path):
     c, _ = client_for(tmp_path)
     flags = c.get("/api/flags").json()
     assert flags["quote_not_found"]["label"] == "근거 인용 없음" and flags["quote_spliced"]["severity"] == "info"
+
+
+def _text_snapshot(s, posting_id, images=()):
+    from crawler.snapshot import PostingSnapshot, SourceRef, StoredFile, save_snapshot, snapshot_dir
+    snap = PostingSnapshot(
+        source=SourceRef(site="saramin", posting_id=posting_id, url=f"https://saramin/{posting_id}"),
+        fetched_at="2026-10-12T00:00:00+00:00", title=f"텍스트 공고 {posting_id}",
+        detail_html=StoredFile(path="detail.html", sha256="x", bytes=1), images=list(images),
+        body_text_length=1722, is_image_posting=False)
+    save_snapshot(snapshot_dir(s.data_dir, "saramin", posting_id), snap)
+
+
+def test_unprocessable_postings_are_hidden_from_main_list_and_listed_separately(tmp_path):
+    c, s = client_for(tmp_path)
+    _text_snapshot(s, "77")                                            # 수집만 됨 — 본문 이미지 없음
+    bad = make_criteria([], posting_id="88", suitable=False)            # 추출했지만 요건 없음
+    bad.warnings = ["스냅샷에 본문 이미지가 없음"]
+    save_criteria(criteria_dir(s.data_dir, "saramin", "88"), bad)
+    assert [p["posting_id"] for p in c.get("/api/postings").json()] == ["55"]
+    excluded = {e["posting_id"]: e for e in c.get("/api/excluded").json()}
+    assert set(excluded) == {"77", "88"}
+    assert "본문 이미지가 없음" in excluded["77"]["reason"] and "1722자" in excluded["77"]["reason"]
+    assert excluded["77"]["url"] == "https://saramin/77"
+    assert excluded["88"]["reason"] == "스냅샷에 본문 이미지가 없음"
+    page = c.get("/excluded")
+    assert page.status_code == 200 and "처리하지 않은 공고" in page.text
+    assert "/excluded" not in c.get("/").text                         # 기본 화면에는 링크도 두지 않음

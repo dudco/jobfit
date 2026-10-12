@@ -274,7 +274,7 @@ async function renderRanking() {
         el("span", { class: "bar track" }, el("span", { style: `width:${Math.max(0, Math.min(100, s.score))}%` }))),
       el("td", {}, s.name, " ", el("span", { class: "sub" }, s.candidate_id), label ? [" ", el("span", { class: "label" }, label)] : null,
         flaggedPeople.includes(s) ? [" ", el("span", { class: "flag warning", title: "판정 검증 표시가 있음" }, "⚑")] : null),
-      el("td", {}, s.position || "—"),
+      el("td", {}, s.tied_positions ? el("span", { class: "sub", title: "평가한 모든 분야의 점수가 같음" }, "전 분야 동일") : (s.position || "—")),
       el("td", {}, `${best.must_met}/${best.must_total}`),
       el("td", {}, best.unknown.length ? el("span", { class: "badge s-unknown" }, best.unknown.length) : "0"));
   });
@@ -288,16 +288,17 @@ async function renderRanking() {
         el("label", { class: "sub" }, el("input", { type: "checkbox", checked: state.showLabels,
           onchange: (e) => { state.showLabels = e.target.checked; renderRanking(); } }), " 평가용 의도 라벨 표시"),
         " ", el("button", { onclick: () => runMatch(true), title: "판정은 캐시를 사용" }, "다시 매칭"))),
+    r.notes.map((n) => el("div", { class: "notice" }, el("b", {}, "ℹ 공고 정보 "), n)),
     flaggedPeople.length ? el("div", { class: "notice" }, el("b", {}, `⚑ 판정 검증 표시 — 지원자 ${flaggedPeople.length}명`),
       " (근거를 확인할 것): ", flaggedPeople.map((s, i) => [i ? ", " : "", el("button", { class: "linkish",
         onclick: () => { state.selected = s.candidate_id; renderRanking(); renderDetail(); } }, s.name)])) : null,
     el("table", {}, el("thead", {}, el("tr", {}, ["순위", "점수", "지원자", "분야", "필수 충족", "확인 필요"].map((h) => el("th", {}, h)))),
       el("tbody", {}, rows)),
-    renderWeights(r.weights),
+    renderWeights(r.weights, r.candidates.some((c) => c.positions.some((p) => p.judgments.some((j) => j.derived)))),
   );
 }
 
-function renderWeights(w) {
+function renderWeights(w, hasDerived) {
   const inputs = WEIGHTS.map(([key, title, min, max, step]) => {
     const out = el("output", {}, Number(w[key]).toFixed(2));
     const input = el("input", { type: "range", min, max, step, value: w[key],
@@ -305,8 +306,11 @@ function renderWeights(w) {
     input.dataset.key = key;
     return el("label", {}, el("span", {}, title, " ", out), input);
   });
+  const derived = hasDerived ? el("label", { title: "공고에 직무 요건이 없어 모집분야 이름에서 도출한 우대 요건" },
+    el("span", {}, el("input", { type: "checkbox", id: "use-derived", checked: w.use_derived !== false, onchange: scheduleRescore }),
+      " 모집분야 적합도 반영 (도출 요건)")) : null;
   return el("div", {},
-    el("div", { class: "weights", id: "weights" }, inputs,
+    el("div", { class: "weights", id: "weights" }, inputs, derived,
       el("button", { onclick: () => { state.result = state.saved; renderRanking(); renderDetail(); } }, "기본값으로")),
     el("div", { class: "sub" }, "가중치를 바꾸면 저장된 판정으로 점수만 다시 계산합니다 (LLM 호출 없음)."));
 }
@@ -317,6 +321,8 @@ function scheduleRescore() {
   rescoreTimer = setTimeout(async () => {
     const weights = {};
     document.querySelectorAll("#weights input[type=range]").forEach((i) => { weights[i.dataset.key] = Number(i.value); });
+    const useDerived = document.getElementById("use-derived");
+    weights.use_derived = useDerived ? useDerived.checked : true;
     try {
       state.result = await api(`/api/postings/${state.current}/rescore`, { method: "POST", body: JSON.stringify(weights) });
       await renderRanking(); renderDetail();
@@ -325,6 +331,16 @@ function scheduleRescore() {
 }
 
 // ---------- 지원자 상세 ----------
+
+/** 분야별 점수 — 많으면 높은 순 3개와 나머지 요약 */
+function positionScores(positions) {
+  const sorted = [...positions].sort((a, b) => b.raw - a.raw);
+  const head = sorted.slice(0, 3).map((p) => `${p.position} ${p.score}`);
+  const rest = sorted.slice(3);
+  if (!rest.length) return head.join(" · ");
+  const lo = Math.min(...rest.map((p) => p.score)), hi = Math.max(...rest.map((p) => p.score));
+  return head.join(" · ") + ` · 그 외 ${rest.length}개 분야 ${lo === hi ? lo : lo + "~" + hi}`;
+}
 
 function renderDetail() {
   const box = $("#detail");
@@ -345,8 +361,8 @@ function renderDetail() {
   fill(box, 
     el("div", { class: "toolbar" },
       el("h2", {}, `${s.rank}위 ${s.name} — ${s.score}점`),
-      el("span", { class: "sub" }, s.position ? `대표 분야: ${s.position}` : "")),
-    s.positions.length > 1 ? el("div", { class: "sub" }, "분야별: ", s.positions.map((p) => `${p.position} ${p.score}`).join(" · ")) : null,
+      el("span", { class: "sub" }, s.tied_positions ? "대표 분야: 전 분야 동일" : (s.position ? `대표 분야: ${s.position}` : ""))),
+    s.positions.length > 1 ? el("div", { class: "sub" }, "분야별: ", positionScores(s.positions)) : null,
     el("ul", { class: "summary" }, s.summary.map((line) => el("li", {}, line))),
     el("table", {}, el("thead", {}, el("tr", {}, ["요건", "판정", "근거 (이력서)", "기여"].map((h) => el("th", {}, h)))),
       el("tbody", {}, rows)),

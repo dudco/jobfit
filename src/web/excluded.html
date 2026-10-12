@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>jobfit — 처리하지 않은 공고</title>
+<style>
+  :root { --bg: #f6f7f9; --panel: #fff; --line: #e3e6ea; --text: #1f2328; --muted: #656d76; --accent: #2f5bd3; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif; }
+  main { max-width: 1100px; margin: 24px auto; padding: 0 20px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+  th, td { text-align: left; padding: 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; color: var(--muted); }
+  a { color: var(--accent); }
+  .empty { color: var(--muted); padding: 24px; text-align: center; }
+</style>
+</head>
+<body>
+<main>
+  <section>
+    <h1>처리하지 않은 공고</h1>
+    <div class="sub">수집했지만 매칭 조건을 만들 수 없어 기본 화면에서 뺀 공고입니다. 이 서비스는 공고 <b>이미지</b>에서만 조건을 추출합니다 —
+      본문이 텍스트인 공고나 이미지에 자격요건이 없는 공고는 여기에 모입니다. <a href="/">매칭 화면으로</a></div>
+    <div id="list"><div class="empty">불러오는 중…</div></div>
+  </section>
+</main>
+<script>
+"use strict";
+function cell(text) { const td = document.createElement("td"); td.textContent = text ?? "—"; return td; }
+fetch("/api/excluded").then((r) => r.json()).then((items) => {
+  const box = document.getElementById("list");
+  if (!items.length) { box.innerHTML = '<div class="empty">처리하지 않은 공고가 없습니다.</div>'; return; }
+  const table = document.createElement("table");
+  table.innerHTML = "<thead><tr><th>rec_idx</th><th>공고</th><th>처리하지 않은 이유</th><th>수집 시각</th></tr></thead>";
+  const body = document.createElement("tbody");
+  for (const e of items) {
+    const tr = document.createElement("tr");
+    tr.append(cell(e.posting_id));
+    const title = cell(""); 
+    if (e.url) { const a = document.createElement("a"); a.href = e.url; a.target = "_blank"; a.rel = "noopener";
+                 a.textContent = e.title || e.url; title.append(a); } else { title.textContent = e.title || "—"; }
+    tr.append(title, cell(e.reason), cell(e.fetched_at ? e.fetched_at.slice(0, 16).replace("T", " ") : null));
+    body.append(tr);
+  }
+  table.append(body); box.replaceChildren(table);
+}).catch((e) => { document.getElementById("list").textContent = "불러오지 못했습니다: " + e.message; });
+</script>
+</body>
+</html>

@@ -27,3 +27,26 @@ def parse_rec_idx(ref: str) -> str:
     if values and values[0].isdigit():
         return values[0]
     raise ValueError(f"rec_idx를 찾을 수 없습니다: {ref!r}")
+
+
+def _content_root(soup: BeautifulSoup):
+    """본문 영역. 가정한 셀렉터가 없으면 문서 전체로 대체한다."""
+    for selector in CONTENT_SELECTORS:
+        node = soup.select_one(selector)
+        if node is not None:
+            return node
+    return soup
+
+
+def extract_image_urls(html: str, base_url: str = BASE) -> list[str]:
+    """상세 본문의 이미지 URL을 문서 순서대로. 로고·아이콘·data URI·중복 제외."""
+    root = _content_root(BeautifulSoup(html, "html.parser"))
+    urls: list[str] = []
+    for img in root.find_all("img"):
+        src = img.get("src") or img.get("data-src") or ""
+        if not src or src.startswith("data:") or IGNORED_SRC.search(src):
+            continue
+        absolute = urljoin(base_url, src)
+        if absolute not in urls:
+            urls.append(absolute)
+    return urls

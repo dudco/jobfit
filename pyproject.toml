@@ -1,0 +1,32 @@
+[project]
+name = "jobfit"
+version = "0.1.0"
+description = "이미지 채용공고를 수집·구조화해 지원자와 매칭·랭킹하는 엔진"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "pydantic>=2.6",
+  "httpx>=0.27",
+  "beautifulsoup4>=4.12",
+  "pillow>=10.0",
+  "typer>=0.12",
+  "rich>=13.0",
+  "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+jobfit = "jobfit.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/jobfit"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

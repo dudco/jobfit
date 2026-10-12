@@ -50,3 +50,22 @@ def extract_image_urls(html: str, base_url: str = BASE) -> list[str]:
         if absolute not in urls:
             urls.append(absolute)
     return urls
+
+
+def body_text_length(html: str) -> int:
+    """본문 영역의 텍스트 길이(공백 제외). 이미지형 공고 판별 근거."""
+    root = _content_root(BeautifulSoup(html, "html.parser"))
+    for tag in root(["script", "style"]):
+        tag.decompose()
+    return len(re.sub(r"\s+", "", root.get_text()))
+
+
+def extract_title(view_html: str) -> Optional[str]:
+    """공고 식별용 제목 (og:title → <title>). 매칭 조건으로는 쓰지 않는다."""
+    soup = BeautifulSoup(view_html, "html.parser")
+    og = soup.find("meta", attrs={"property": "og:title"})
+    if og is not None and og.get("content", "").strip():
+        return og["content"].strip()
+    if soup.title is not None and soup.title.get_text(strip=True):
+        return soup.title.get_text(strip=True)
+    return None

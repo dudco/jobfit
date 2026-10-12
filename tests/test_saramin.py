@@ -44,3 +44,19 @@ def test_extracts_body_images_in_document_order():
 
 def test_falls_back_to_whole_document_without_content_container():
     assert extract_image_urls('<img src="/a/poster.jpg">') == ["https://www.saramin.co.kr/a/poster.jpg"]
+
+
+from jobfit.crawler.saramin import body_text_length, extract_title
+
+
+def test_body_text_length_ignores_whitespace_scripts_and_outside_text():
+    html = ('<div class="user_content"><p>자격 요건</p><script>var x = 1;</script>'
+            '<style>p {}</style></div><div>본문 밖</div>')
+    assert body_text_length(html) == 4  # "자격요건"
+
+
+def test_extract_title_prefers_og_title_then_title_tag():
+    assert extract_title('<head><meta property="og:title" content=" [OO] 회계 채용 ">'
+                         '<title>사람인</title></head>') == "[OO] 회계 채용"
+    assert extract_title("<head><title> 회계 채용 | 사람인 </title></head>") == "회계 채용 | 사람인"
+    assert extract_title("<html></html>") is None

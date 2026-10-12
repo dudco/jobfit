@@ -29,4 +29,4 @@
 | 03 | 지원자 매칭 스코어링 | [spec](specs/2026-10-12-03-candidate-scoring-design.md) | [plan](plans/2026-10-12-03-candidate-scoring.md) | 완료 |
 | 04 | API · UI | [spec](specs/2026-10-12-04-api-and-ui-design.md) | [plan](plans/2026-10-12-04-api-and-ui.md) | 완료 |
 | 05 | 정보가 부족한 공고 대응 | [spec](specs/2026-10-12-05-low-information-postings-design.md) | [plan](plans/2026-10-12-05-low-information-postings.md) | 완료 |
-| 06 | 판단 전용 모델(JEV) 판정 실험 | [spec](specs/2026-10-12-06-judge-model-experiment-design.md) | [plan](plans/2026-10-12-06-judge-model-experiment.md) | 구현 완료 — 실험 실행 대기 |
+| 06 | 판단 전용 모델(JEV) 판정 실험 | [spec](specs/2026-10-12-06-judge-model-experiment-design.md) | [plan](plans/2026-10-12-06-judge-model-experiment.md) | 완료 |

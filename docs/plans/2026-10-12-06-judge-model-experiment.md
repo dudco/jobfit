@@ -18,7 +18,7 @@
 - [x] **Task 2** — `tests/test_jev.py`: 요건마다 상태·근거 줄 질문, 근거 선택지 = 이력서 줄 + none, 인용 = 고른 줄 원문(검증 통과), 근거 없는 충족 → 확인 필요, 캐시로 재호출 없음
 - [x] **Task 3** — `test_experiment_compares_with_gpt_reference_and_computes_cascade`: 기준과 일치율, 불일치 목록(확신도 포함), 확신도 기준별 넘긴 수·일치율, 토큰, 보고서 파일
 - [x] **Task 4** — `jobfit experiment-jev`, `.env.example`, `pyproject.toml [jev]`. 실제 데이터 + 대역으로 실행 확인 (질문 수 S-OIL 최대 22, KT&G 62)
-- [ ] **Task 5** [수동 — API 키]
+- [x] **Task 5** [수동 — API 키] — 결과·판단은 스펙 06 5장, ADR-0024
 
 ```bash
 uv pip install -e ".[dev,jev]"

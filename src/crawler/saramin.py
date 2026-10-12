@@ -16,6 +16,10 @@ VIEW_URL = BASE + "/zf_user/jobs/relay/view?rec_idx={rec_idx}"                  
 DETAIL_URL = BASE + "/zf_user/jobs/relay/view-detail?rec_idx={rec_idx}&rec_seq=0"  # 상세 본문 iframe (H1)
 CONTENT_SELECTORS = [".user_content"]                                              # 본문 영역 (H2)
 IGNORED_SRC = re.compile(r"(logo|icon|blank|spacer|\.svg$)", re.I)
+# 화면에 보이지 않게 숨긴 요소 (사람인은 본문에 font-size:0 직무 카테고리 키워드 블록을 넣는다)
+HIDDEN_STYLE = re.compile(
+    r"display\s*:\s*none|visibility\s*:\s*hidden|font-size\s*:\s*0(?:px|pt|em|rem|%)?\s*(?:;|!|$)", re.I
+)
 
 
 def parse_rec_idx(ref: str) -> str:
@@ -53,9 +57,11 @@ def extract_image_urls(html: str, base_url: str = BASE) -> list[str]:
 
 
 def body_text_length(html: str) -> int:
-    """본문 영역의 텍스트 길이(공백 제외). 이미지형 공고 판별 근거."""
+    """본문 영역에서 화면에 보이는 텍스트 길이(공백 제외). 이미지형 공고 판별 근거."""
     root = _content_root(BeautifulSoup(html, "html.parser"))
     for tag in root(["script", "style"]):
+        tag.decompose()
+    for tag in root.find_all(style=HIDDEN_STYLE):
         tag.decompose()
     return len(re.sub(r"\s+", "", root.get_text()))
 

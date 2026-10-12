@@ -60,3 +60,25 @@ def test_extract_title_prefers_og_title_then_title_tag():
                          '<title>사람인</title></head>') == "[OO] 회계 채용"
     assert extract_title("<head><title> 회계 채용 | 사람인 </title></head>") == "회계 채용 | 사람인"
     assert extract_title("<html></html>") is None
+
+
+from pathlib import Path
+
+REAL = Path(__file__).parent / "fixtures" / "saramin_detail_real.html"
+
+
+@pytest.mark.skipif(not REAL.exists(), reason="실제 사람인 상세 HTML 없음")
+def test_real_detail_html_is_image_posting():
+    html = REAL.read_text(encoding="utf-8")
+    urls = extract_image_urls(html)
+    assert urls and all(u.startswith("http") for u in urls)
+    assert body_text_length(html) <= 300
+
+
+def test_body_text_length_ignores_visually_hidden_text():
+    # 사람인 상세 본문에는 font-size:0 으로 숨긴 직무 카테고리 키워드 블록이 들어 있다
+    html = ('<div class="user_content"><img src="/p.png">'
+            '<td style="display:block; height: 0; width: 0; font-size: 0; overflow:hidden;">숨김 키워드</td>'
+            '<span style="display: none">숨김</span><span style="visibility:hidden">숨김</span>'
+            '<p style="font-size: 0.9em">보임</p></div>')
+    assert body_text_length(html) == 2  # "보임"

@@ -25,6 +25,8 @@
 | [0019](0019-fastapi-synchronous.md) | API는 FastAPI로, 실행 엔드포인트는 동기로 둔다 (작업 큐 없음) | 채택 | 04 |
 | [0020](0020-static-single-page-ui.md) | UI는 API만 호출하는 정적 HTML 한 장 (빌드 없음) | 채택 | 04 |
 | [0021](0021-end-to-end-run.md) | 단계별 명령은 두고, 한 번에 실행하는 `run`을 위에 얹는다 | 채택 | 04 |
+| [0022](0022-position-fit-derived-requirements.md) | 직무 요건이 없는 공고는 모집분야 이름에서 직무 적합도 우대 요건을 도출한다 | 채택 | 05 |
+| [0023](0023-excluded-postings-separate-page.md) | 처리할 수 없는 공고는 기본 화면에서 빼고 `/excluded`에서만 보인다 | 채택 | 05 |
 
 ## 템플릿
 

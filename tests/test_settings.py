@@ -20,7 +20,8 @@ def test_defaults(monkeypatch):
     assert "Mozilla" in s.user_agent
 
 
-PREP_KEYS = ("JOBFIT_VISION_MODEL", "JOBFIT_TEXT_MODEL", "JOBFIT_SLICE_HEIGHT", "JOBFIT_MAX_WIDTH")
+PREP_KEYS = ("JOBFIT_VISION_MODEL", "JOBFIT_TEXT_MODEL", "JOBFIT_SLICE_HEIGHT", "JOBFIT_MAX_WIDTH",
+             "JOBFIT_JUDGE_MODEL")
 
 
 def test_preprocessing_settings_from_env(monkeypatch):
@@ -40,3 +41,11 @@ def test_preprocessing_defaults(monkeypatch, tmp_path):
     assert s.vision_model and s.text_model
     assert (s.slice_height, s.max_width) == (1200, 1000)
     assert s.llm_cache_dir == tmp_path / "cache" / "llm"
+
+
+def test_judge_model_from_env_and_default(monkeypatch):
+    for k in PREP_KEYS:
+        monkeypatch.delenv(k, raising=False)
+    assert load_settings(dotenv_path=None).judge_model == "gpt-4.1"
+    monkeypatch.setenv("JOBFIT_JUDGE_MODEL", "j-model")
+    assert load_settings(dotenv_path=None).judge_model == "j-model"

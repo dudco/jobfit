@@ -15,6 +15,7 @@ DEFAULT_UA = (
 )
 DEFAULT_VISION_MODEL = "gpt-4.1"      # 스펙 02 실험 X2로 확정 (ADR-0010)
 DEFAULT_TEXT_MODEL = "gpt-4.1"   # 스펙 02 실험 X2: mini는 유의사항의 우대 문구를 놓침
+DEFAULT_JUDGE_MODEL = "gpt-4.1"  # 지원자 판정 (스펙 03)
 
 
 @dataclass(frozen=True)
@@ -26,6 +27,7 @@ class Settings:
     text_model: str = DEFAULT_TEXT_MODEL
     slice_height: int = 1200           # 분할 목표 높이. 0 = 분할하지 않음 (ADR-0012)
     max_width: int = 1000              # 이보다 넓은 이미지는 비율 유지 축소
+    judge_model: str = DEFAULT_JUDGE_MODEL
 
     @property
     def llm_cache_dir(self) -> Path:
@@ -44,4 +46,5 @@ def load_settings(*, dotenv_path: Optional[Path] = ROOT / ".env") -> Settings:
         text_model=env("JOBFIT_TEXT_MODEL", DEFAULT_TEXT_MODEL),
         slice_height=int(env("JOBFIT_SLICE_HEIGHT", "1200")),
         max_width=int(env("JOBFIT_MAX_WIDTH", "1000")),
+        judge_model=env("JOBFIT_JUDGE_MODEL", DEFAULT_JUDGE_MODEL),
     )

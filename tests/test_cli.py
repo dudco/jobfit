@@ -192,3 +192,18 @@ def test_serve_command_starts_uvicorn_with_app(monkeypatch, tmp_path):
     result = CliRunner().invoke(cli.app, ["serve", "--port", "8123"])
     assert result.exit_code == 0, result.output
     assert seen == [("FastAPI", "127.0.0.1", 8123)]
+
+
+def test_service_errors_are_shown_as_messages_not_tracebacks(monkeypatch, tmp_path):
+    import pipeline
+
+    monkeypatch.setenv("JOBFIT_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("JOBFIT_CANDIDATES_DIR", str(_write_candidate(tmp_path / "cands")))
+
+    def fail(*a, **k):
+        raise RuntimeError("공고 55226797은(는) 이미지 공고가 아님")
+
+    monkeypatch.setattr(pipeline, "run", fail)
+    result = CliRunner().invoke(cli.app, ["run", "55226797"])
+    assert result.exit_code == 1
+    assert "이미지 공고가 아님" in result.output and "Traceback" not in result.output

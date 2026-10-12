@@ -121,6 +121,11 @@ def test_missing_or_unsuitable_criteria(tmp_path):
     d = write_candidates(tmp_path, person("a"))
     with pytest.raises(RuntimeError, match="jobfit extract 55"):
         match("55", settings(tmp_path), llm=FakeLLM(), candidates_dir=d, log=quiet)
+    unsuitable = make_criteria([], suitable=False)
+    unsuitable.warnings = ["스냅샷에 본문 이미지가 없음"]
+    write_criteria(tmp_path, unsuitable)
+    with pytest.raises(RuntimeError, match="평가할 요건이 없음 — 스냅샷에 본문 이미지가 없음"):
+        match("55", settings(tmp_path), llm=FakeLLM(), candidates_dir=d, log=quiet)
     write_criteria(tmp_path, make_criteria([make_requirement("r1", "보훈", sensitive=True)]))
     with pytest.raises(RuntimeError, match="평가할 요건"):
         match("55", settings(tmp_path), llm=FakeLLM(), candidates_dir=d, log=quiet)

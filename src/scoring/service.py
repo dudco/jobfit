@@ -66,7 +66,9 @@ def match(ref: str, settings: Settings, *, llm: LLM, candidates_dir: Path, refre
         log(f"공고 {posting_id}: 기존 매칭 결과 사용 (--refresh로 다시)")
         return existing                                # 조건이 다시 추출됐으면 재사용하지 않는다
     if not criteria.suitable or not applicable(criteria, None):
-        raise RuntimeError(f"공고 {posting_id}는 평가할 요건이 없음 (suitable={criteria.suitable})")
+        reason = "; ".join(criteria.warnings) or (
+            "법정 우대 요건만 있음 (점수 미반영)" if criteria.requirements else "추출된 요건 0개")
+        raise RuntimeError(f"공고 {posting_id}는 평가할 요건이 없음 — {reason}")
     candidates = load_candidates(candidates_dir)
     matched_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
     scores = []

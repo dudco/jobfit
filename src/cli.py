@@ -1,6 +1,8 @@
 """CLI 어댑터. 서비스 함수를 호출하고 결과를 출력만 한다 (ADR-0002)."""
 from __future__ import annotations
 
+import functools
+
 from pathlib import Path
 from typing import List, Optional
 
@@ -26,11 +28,24 @@ app = typer.Typer(add_completion=False, no_args_is_help=True, help="이미지 �
 console = Console()
 
 
+def _friendly(fn):
+    """서비스가 알려 주는 입력·데이터 문제(RuntimeError, ValueError)는 추적 정보 없이 메시지로 보여준다."""
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except (RuntimeError, ValueError) as e:
+            console.print(f"[red]{escape(str(e))}[/red]")
+            raise typer.Exit(1)
+    return wrapper
+
+
 def _log(msg: str) -> None:
     console.print(f"[dim]{msg}[/dim]")
 
 
 @app.command()
+@_friendly
 def crawl(
     refs: List[str] = typer.Argument(..., help="사람인 공고 URL 또는 rec_idx (여러 개 가능)"),
     refresh: bool = typer.Option(False, "--refresh", help="기존 스냅샷을 무시하고 다시 수집"),
@@ -61,6 +76,7 @@ def make_llm(settings) -> CachedLLM:
 
 
 @app.command()
+@_friendly
 def extract(
     refs: List[str] = typer.Argument(..., help="사람인 공고 URL 또는 rec_idx (여러 개 가능)"),
     refresh: bool = typer.Option(False, "--refresh", help="기존 추출 결과를 무시하고 다시 추출"),
@@ -180,6 +196,7 @@ def _print_ranking(result, candidates) -> None:
 
 
 @app.command("match")
+@_friendly
 def match_cmd(
     refs: List[str] = typer.Argument(..., help="사람인 공고 URL 또는 rec_idx (여러 개 가능)"),
     candidates: Optional[Path] = typer.Option(None, "--candidates", help="지원자 JSON 디렉터리 (기본: 설정 candidates_dir)"),
@@ -196,6 +213,7 @@ def match_cmd(
 
 
 @app.command("run")
+@_friendly
 def run_cmd(
     refs: List[str] = typer.Argument(..., help="사람인 공고 URL 또는 rec_idx (여러 개 가능)"),
     refresh: bool = typer.Option(False, "--refresh", help="매칭만 다시 (수집·추출은 재사용)"),

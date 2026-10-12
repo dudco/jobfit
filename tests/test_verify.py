@@ -1,6 +1,6 @@
 from preprocessing.criteria import CriteriaSource
 from preprocessing.structure import LLMConditions, LLMPosition, LLMRequirement, StructuredPosting
-from preprocessing.verify import build_criteria, find_quote
+from preprocessing.verify import build_criteria, find_fragments, find_quote
 
 TRANSCRIPT = (
     "<!-- slice 00 image=0 part=0 -->\n## 지원자격\n- 고등학교 졸업 이상\n- 야간근무 가능\n\n"
@@ -29,6 +29,23 @@ def test_find_quote_ignores_whitespace_differences():
     assert find_quote("- 고등학교  졸업\n이상", TRANSCRIPT) == TRANSCRIPT.index("- 고등학교")
     assert find_quote("대학교 졸업", TRANSCRIPT) is None
     assert find_quote(" ", TRANSCRIPT) is None
+
+
+def test_find_fragments_accepts_quotes_spliced_from_separate_lines():
+    # LLM이 표제와 떨어진 줄, 또는 떨어진 표 행을 이어 붙여 인용하는 경우 (X2 관찰)
+    spliced = "지원자격  • 야간근무 가능"
+    assert find_quote(spliced, TRANSCRIPT) is None
+    assert find_fragments(spliced, TRANSCRIPT) == TRANSCRIPT.index("야간근무 가능")   # 가장 긴 조각 위치
+    assert find_fragments("| 고등학교 졸업 이상 |\n| 국가보훈대상자 |", TRANSCRIPT) == TRANSCRIPT.index("- 고등학교") + 2
+    assert find_fragments("지원자격 • 운전면허", TRANSCRIPT) is None                  # 한 조각이라도 없으면 실패
+    assert find_fragments("야간근무 가능", TRANSCRIPT) is None                          # 조각이 하나면 대상 아님
+
+
+def test_spliced_quote_is_located_and_flagged_without_warning():
+    c = build([llm_req("야간근무 가능", quote="지원자격  • 야간근무 가능")])
+    assert c.requirements[0].flags == ["quote_spliced"]
+    assert (c.requirements[0].evidence.image_index, c.requirements[0].evidence.slice_index) == (0, 0)
+    assert c.warnings == []
 
 
 def test_ids_evidence_location_and_missing_quote_flag():

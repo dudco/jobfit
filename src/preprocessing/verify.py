@@ -1,6 +1,7 @@
 """구조화 결과의 검증·후처리 — LLM이 아니라 코드가 책임지는 부분 (ADR-0011).
 
 - 근거 인용이 전사에 실제로 있는지 확인하고 출처 위치(이미지·조각)를 채운다
+  (떨어진 줄을 이어 붙인 인용은 모든 조각이 있으면 인정하고 quote_spliced로 표시)
 - 공백만 다른 중복 요건을 병합한다 (겹침 분할로 같은 줄이 두 번 전사될 수 있음)
 - id를 순서대로 부여하고, 이상 징후를 경고로 남긴다
 """
@@ -31,6 +32,24 @@ def find_quote(quote: str, transcript: str) -> Optional[int]:
     haystack = "".join(transcript[i] for i in positions)
     found = haystack.find(needle)
     return None if found < 0 else positions[found]
+
+
+FRAGMENT_SPLIT = re.compile(r"[\n|•]")   # 줄바꿈, 표 칸 경계, 글머리표
+
+
+def find_fragments(quote: str, transcript: str) -> Optional[int]:
+    """떨어진 줄·표 행을 이어 붙인 인용을 조각으로 나눠, 모든 조각이 전사에 있으면 가장 긴 조각의 위치를 돌려준다.
+
+    LLM이 '자격요건 • 야간근무 가능자'처럼 표제와 떨어진 항목을 붙여 인용하는 경우가 있다 (X2 관찰).
+    조각 하나라도 전사에 없으면 None — 지어낸 문구를 받아들이지 않는다.
+    """
+    fragments = [f for f in FRAGMENT_SPLIT.split(quote) if len(_compact(f)) >= 2]
+    if len(fragments) < 2:
+        return None
+    found = [(len(_compact(f)), find_quote(f, transcript)) for f in fragments]
+    if any(offset is None for _, offset in found):
+        return None
+    return max(found, key=lambda x: x[0])[1]
 
 
 def dedupe(requirements: list[LLMRequirement]) -> list[LLMRequirement]:
@@ -75,9 +94,11 @@ def build_criteria(out: StructuredPosting, transcript: str, *, source: CriteriaS
     known_positions = {p.name for p in out.positions}
     requirements: list[Requirement] = []
     for i, r in enumerate((r for r in candidates if not means_no_condition(r.text)), start=1):
-        offset = find_quote(r.quote, transcript)
+        offset, flags = find_quote(r.quote, transcript), []
+        if offset is None:
+            offset = find_fragments(r.quote, transcript)
+            flags.append("quote_spliced" if offset is not None else "quote_not_found")
         image_index, slice_index = slice_at(transcript, offset) if offset is not None else (None, None)
-        flags = [] if offset is not None else ["quote_not_found"]
         if known_positions and any(p not in known_positions for p in r.positions):
             flags.append("unknown_position")
         requirements.append(Requirement(

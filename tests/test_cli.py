@@ -161,3 +161,23 @@ def test_result_command_without_result_exits_1(monkeypatch, tmp_path):
     result = CliRunner().invoke(cli.app, ["result", "55"])
     assert result.exit_code == 1
     assert "jobfit match 55" in result.output
+
+
+def test_run_command_runs_pipeline_and_prints_ranking(monkeypatch, tmp_path):
+    import pipeline
+
+    from .test_result import sample
+
+    monkeypatch.setenv("JOBFIT_DATA_DIR", str(tmp_path))
+    monkeypatch.setenv("JOBFIT_CANDIDATES_DIR", str(_write_candidate(tmp_path / "cands")))
+    seen = []
+
+    def fake_run(ref, settings, *, llm, refresh, log):
+        seen.append((ref, refresh, type(llm).__name__))
+        return sample()
+
+    monkeypatch.setattr(pipeline, "run", fake_run)
+    result = CliRunner().invoke(cli.app, ["run", "55", "--refresh"])
+    assert result.exit_code == 0, result.output
+    assert seen == [("55", True, "CachedLLM")]
+    assert "c1" in result.output and "70" in result.output

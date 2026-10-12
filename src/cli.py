@@ -9,6 +9,7 @@ from rich.console import Console
 from rich.markup import escape
 from rich.table import Table
 
+import pipeline
 from crawler.saramin import parse_rec_idx
 from llm import CachedLLM, OpenAILLM, cached_openai
 from preprocessing import service as preprocessing_service
@@ -177,6 +178,20 @@ def match_cmd(
     people = load_candidates(candidates)
     for ref in refs:
         result = scoring_service.match(ref, settings, llm=llm, candidates_dir=candidates, refresh=refresh, log=_log)
+        _print_ranking(result, people)
+
+
+@app.command("run")
+def run_cmd(
+    refs: List[str] = typer.Argument(..., help="사람인 공고 URL 또는 rec_idx (여러 개 가능)"),
+    refresh: bool = typer.Option(False, "--refresh", help="매칭만 다시 (수집·추출은 재사용)"),
+):
+    """수집 → 조건 추출 → 매칭을 한 번에 실행하고 랭킹을 보여준다."""
+    settings = load_settings()
+    llm = make_llm(settings)
+    people = load_candidates(settings.candidates_dir)
+    for ref in refs:
+        result = pipeline.run(ref, settings, llm=llm, refresh=refresh, log=_log)
         _print_ranking(result, people)
 
 

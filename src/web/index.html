@@ -1,1 +1,362 @@
-<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>jobfit</title></head><body>jobfit</body></html>
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>jobfit — 공고 매칭 결과</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #fff; --line: #e3e6ea; --text: #1f2328; --muted: #656d76; --accent: #2f5bd3;
+    --met: #1a7f37; --partial: #9a6700; --unmet: #cf222e; --unknown: #0969da; --na: #6e7781;
+    --met-bg: #dafbe1; --partial-bg: #fff8c5; --unmet-bg: #ffebe9; --unknown-bg: #ddf4ff; --na-bg: #eaeef2;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif; }
+  header { display: flex; gap: 12px; align-items: center; padding: 12px 20px; background: var(--panel);
+           border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 5; flex-wrap: wrap; }
+  header h1 { font-size: 18px; margin: 0 8px 0 0; letter-spacing: -0.3px; }
+  header form { display: flex; gap: 6px; flex: 1; min-width: 280px; max-width: 640px; }
+  input[type=text] { flex: 1; padding: 7px 10px; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+  button { padding: 7px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--panel);
+           font: inherit; cursor: pointer; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  button:disabled { opacity: .55; cursor: wait; }
+  #status { color: var(--muted); font-size: 13px; }
+  #status.error { color: var(--unmet); }
+  nav#tabs { display: flex; gap: 6px; padding: 10px 20px 0; flex-wrap: wrap; }
+  nav#tabs button { border-radius: 6px 6px 0 0; border-bottom: none; }
+  nav#tabs button.active { background: var(--panel); font-weight: 600; box-shadow: inset 0 2px 0 var(--accent); }
+  main { display: grid; grid-template-columns: minmax(300px, 380px) 1fr; gap: 16px; padding: 0 20px 40px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  section, aside { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; min-width: 0; }
+  aside { align-self: start; position: sticky; top: 70px; max-height: calc(100vh - 90px); overflow: auto; }
+  h2 { font-size: 16px; margin: 0 0 4px; }
+  h3 { font-size: 13px; margin: 16px 0 6px; color: var(--muted); text-transform: none; }
+  .sub { color: var(--muted); font-size: 13px; }
+  ul.reqs { list-style: none; padding: 0; margin: 0; }
+  ul.reqs li { padding: 6px 0; border-bottom: 1px dashed var(--line); display: flex; gap: 8px; align-items: flex-start; }
+  ul.reqs li .t { flex: 1; }
+  .chip { display: inline-block; font-size: 11px; padding: 0 6px; border-radius: 10px; background: var(--na-bg);
+          color: var(--muted); margin: 2px 4px 0 0; white-space: nowrap; }
+  .chip.must { background: #ffeff0; color: var(--unmet); }
+  .chip.pref { background: #eef4ff; color: var(--accent); }
+  .linkish { border: none; background: none; color: var(--accent); padding: 0; font-size: 12px; cursor: pointer; white-space: nowrap; }
+  .warn { color: var(--partial); font-size: 13px; }
+  .stack > * + * { margin-top: 16px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; }
+  tr.row { cursor: pointer; }
+  tr.row:hover { background: #f6f8fa; }
+  tr.row.selected { background: #eef4ff; }
+  .score { font-weight: 700; font-variant-numeric: tabular-nums; width: 34px; display: inline-block; text-align: right; }
+  .bar { display: inline-block; height: 8px; border-radius: 4px; background: var(--accent); vertical-align: middle; margin-left: 8px; }
+  .bar.track { background: var(--na-bg); width: 120px; position: relative; }
+  .bar.track > span { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--accent); }
+  .badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 8px; border-radius: 10px; white-space: nowrap; }
+  .s-met { color: var(--met); background: var(--met-bg); }
+  .s-partial { color: var(--partial); background: var(--partial-bg); }
+  .s-unmet { color: var(--unmet); background: var(--unmet-bg); }
+  .s-unknown { color: var(--unknown); background: var(--unknown-bg); }
+  .s-not_applicable { color: var(--na); background: var(--na-bg); }
+  .label { font-size: 11px; padding: 0 6px; border-radius: 4px; border: 1px dashed var(--muted); color: var(--muted); }
+  .weights { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 8px 16px; align-items: center;
+             padding: 10px 12px; background: #f6f8fa; border-radius: 6px; margin-top: 12px; font-size: 13px; }
+  .weights label { display: flex; flex-direction: column; gap: 2px; }
+  .weights output { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .summary { margin: 8px 0 0; padding-left: 18px; }
+  .quote { font-size: 13px; color: #3b4148; background: #f6f8fa; border-left: 3px solid var(--line); padding: 2px 6px; margin: 2px 0; }
+  .contrib { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .flag { color: var(--unmet); font-size: 11px; }
+  ol.resume { margin: 0; padding-left: 32px; font-size: 13px; }
+  ol.resume li { padding: 1px 4px; border-radius: 3px; }
+  ol.resume li.hit { background: #fff1c2; }
+  .empty { color: var(--muted); padding: 24px; text-align: center; }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+  dialog { border: 1px solid var(--line); border-radius: 8px; max-width: min(900px, 94vw); padding: 16px; }
+  dialog img { max-width: 100%; border: 1px solid var(--line); margin-top: 8px; }
+  dialog::backdrop { background: rgba(0, 0, 0, .35); }
+</style>
+</head>
+<body>
+<header>
+  <h1>jobfit</h1>
+  <form id="run-form">
+    <input id="ref" type="text" placeholder="사람인 공고 URL 또는 rec_idx" autocomplete="off">
+    <button class="primary" id="run-btn" type="submit">실행</button>
+  </form>
+  <span id="status"></span>
+</header>
+<nav id="tabs"></nav>
+<main>
+  <aside id="criteria"><div class="empty">공고를 불러오는 중…</div></aside>
+  <div class="stack">
+    <section id="ranking"></section>
+    <section id="detail"><div class="empty">랭킹에서 지원자를 고르면 요건별 근거가 보입니다.</div></section>
+  </div>
+</main>
+<dialog id="evidence"></dialog>
+
+<script>
+"use strict";
+const CATEGORY = { experience: "경력", education: "학력·전공", certification: "자격증", language: "어학", skill: "기술",
+  domain_knowledge: "직무 지식", soft_skill: "역량", other: "기타" };
+const STATUS = { met: "충족", partial: "부분", unmet: "미충족", unknown: "확인 필요", not_applicable: "해당 없음" };
+const WEIGHTS = [
+  ["must_share", "필수 비중", 0, 1, 0.05], ["gate", "필수 미충족 1개당 곱", 0.5, 1, 0.05],
+  ["partial", "부분 충족 점수", 0, 1, 0.05], ["unknown", "확인 필요 점수", 0, 1, 0.05],
+];
+const state = { postings: [], current: null, criteria: null, saved: null, result: null, candidates: {},
+                selected: null, showLabels: false };
+
+const $ = (sel) => document.querySelector(sel);
+
+/** 요소 생성. 문자열 자식은 textContent로만 넣는다 (공고·이력서 문구를 HTML로 해석하지 않음). */
+function el(tag, attrs = {}, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k.startsWith("on")) node.addEventListener(k.slice(2), v);
+    else if (k === "class") node.className = v;
+    else node.setAttribute(k, v === true ? "" : v);
+  }
+  fill(node, ...children);
+  return node;
+}
+
+/** 자식을 교체한다. 배열은 펼치고 null·false는 건너뛴다. 문자열은 텍스트 노드로만. */
+function fill(node, ...children) {
+  node.replaceChildren(...children.flat(Infinity).filter((c) => c !== null && c !== undefined && c !== false)
+    .map((c) => (c instanceof Node ? c : document.createTextNode(String(c)))));
+  return node;
+}
+
+async function api(path, options = {}) {
+  const res = await fetch(path, { headers: { "Content-Type": "application/json" }, ...options });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try { detail = (await res.json()).detail || detail; } catch (_) {}
+    const err = new Error(detail); err.status = res.status; throw err;
+  }
+  return res.json();
+}
+
+function setStatus(text, isError = false) {
+  const s = $("#status"); s.textContent = text; s.className = isError ? "error" : "";
+}
+
+const norm = (s) => s.replace(/[\s\[\]:：]/g, "");
+
+// ---------- 공고 ----------
+
+async function loadPostings(selectId) {
+  state.postings = await api("/api/postings");
+  const tabs = $("#tabs"); fill(tabs);
+  for (const p of state.postings) {
+    tabs.append(el("button", { class: p.posting_id === (selectId || state.current) ? "active" : "",
+      title: `${p.company || ""} · 요건 ${p.requirements}개`, onclick: () => selectPosting(p.posting_id) },
+      `${p.company ? p.company + " · " : ""}${p.title}`));
+  }
+  if (!state.postings.length) {
+    fill($("#criteria"), el("div", { class: "empty" }, "추출된 공고가 없습니다. 위에 공고 URL을 넣고 실행하세요."));
+    fill($("#ranking")); return;
+  }
+  await selectPosting(selectId || state.current || state.postings[0].posting_id);
+}
+
+async function selectPosting(id) {
+  state.current = id; state.selected = null;
+  [...$("#tabs").children].forEach((b, i) => b.classList.toggle("active", state.postings[i].posting_id === id));
+  const [criteria, result] = await Promise.all([
+    api(`/api/postings/${id}/criteria`),
+    api(`/api/postings/${id}/result`).catch((e) => { if (e.status === 404) return null; throw e; }),
+  ]);
+  state.criteria = criteria; state.saved = result; state.result = result;
+  renderCriteria(); renderRanking();
+  fill($("#detail"), el("div", { class: "empty" }, "랭킹에서 지원자를 고르면 요건별 근거가 보입니다."));
+}
+
+function renderCriteria() {
+  const c = state.criteria;
+  const reqItem = (r) => el("li", {},
+    el("div", { class: "t" }, r.text, el("div", {},
+      el("span", { class: "chip" }, CATEGORY[r.category] || r.category),
+      el("span", { class: "chip" }, r.positions.length ? r.positions.join(", ") : "전체 분야"),
+      r.flags.length ? el("span", { class: "flag" }, "⚑ " + r.flags.join(", ")) : null)),
+    el("button", { class: "linkish", onclick: () => showEvidence(r) }, "원본"));
+  const scored = c.requirements.filter((r) => !r.sensitive);
+  const group = (title, items) => items.length ? [el("h3", {}, title), el("ul", { class: "reqs" }, items.map(reqItem))] : [];
+  const cond = c.conditions;
+  const condLines = [cond.employment_type, cond.schedule, ...cond.locations, ...cond.others].filter(Boolean);
+  fill($("#criteria"), 
+    el("h2", {}, c.title),
+    el("div", { class: "sub" }, [c.company, c.job_family, `rec_idx ${c.source.posting_id}`].filter(Boolean).join(" · ")),
+    c.positions.length > 1 ? [el("h3", {}, `모집분야 ${c.positions.length}`),
+      el("div", {}, c.positions.map((p) => el("span", { class: "chip", title: p.duties || "" }, p.name)))] : null,
+    group(`필수 ${scored.filter((r) => r.priority === "must").length}`, scored.filter((r) => r.priority === "must")),
+    group(`우대 ${scored.filter((r) => r.priority === "preferred").length}`, scored.filter((r) => r.priority === "preferred")),
+    group("법정 우대 — 점수 미반영 (관계 법령·증빙에 따라 전형에서 적용)", c.requirements.filter((r) => r.sensitive)),
+    condLines.length ? [el("h3", {}, "근무조건 (참고 — 점수 미반영)"), el("ul", { class: "reqs" }, condLines.map((t) => el("li", {}, t)))] : null,
+    c.warnings.length ? [el("h3", {}, "추출 경고"), c.warnings.map((w) => el("div", { class: "warn" }, "⚠ " + w))] : null,
+    el("p", { class: "sub" }, `조건 추출 ${c.extracted_at.slice(0, 16).replace("T", " ")} · 이미지에서만 추출`),
+  );
+}
+
+function showEvidence(req) {
+  const d = $("#evidence");
+  const n = req.evidence.slice_index;
+  fill(d, 
+    el("div", { class: "toolbar" }, el("strong", {}, req.text), el("button", { onclick: () => d.close() }, "닫기")),
+    el("div", { class: "quote" }, req.evidence.quote),
+    n === null || n === undefined
+      ? el("p", { class: "warn" }, "근거 위치를 찾지 못한 요건입니다 (quote_not_found).")
+      : [el("div", { class: "sub" }, `공고 이미지 ${req.evidence.image_index + 1} · 조각 ${n}`),
+         el("img", { src: `/api/postings/${state.current}/slices/${n}`, alt: "공고 원본 조각" })],
+  );
+  d.showModal();
+}
+
+// ---------- 랭킹 ----------
+
+async function ensureCandidates() {
+  if (Object.keys(state.candidates).length) return;
+  for (const c of await api("/api/candidates")) state.candidates[c.id] = c;
+}
+
+function labelOf(id) {
+  const c = state.candidates[id];
+  if (!c || !c.label) return null;
+  return c.target_posting === state.current ? c.label : "타 공고";
+}
+
+async function renderRanking() {
+  const box = $("#ranking");
+  const r = state.result;
+  if (!r) {
+    fill(box, el("div", { class: "empty" }, "아직 매칭 결과가 없습니다. ",
+      el("button", { class: "primary", onclick: runMatch }, "매칭 실행")));
+    return;
+  }
+  await ensureCandidates();
+  const rows = r.candidates.map((s) => {
+    const best = s.positions.find((p) => p.position === s.position);
+    const label = state.showLabels ? labelOf(s.candidate_id) : null;
+    return el("tr", { class: "row" + (s.candidate_id === state.selected ? " selected" : ""),
+                      onclick: () => { state.selected = s.candidate_id; renderRanking(); renderDetail(); } },
+      el("td", {}, s.rank),
+      el("td", {}, el("span", { class: "score" }, s.score),
+        el("span", { class: "bar track" }, el("span", { style: `width:${Math.max(0, Math.min(100, s.score))}%` }))),
+      el("td", {}, s.name, " ", el("span", { class: "sub" }, s.candidate_id), label ? [" ", el("span", { class: "label" }, label)] : null),
+      el("td", {}, s.position || "—"),
+      el("td", {}, `${best.must_met}/${best.must_total}`),
+      el("td", {}, best.unknown.length ? el("span", { class: "badge s-unknown" }, best.unknown.length) : "0"));
+  });
+  const changed = state.saved && JSON.stringify(state.saved.weights) !== JSON.stringify(r.weights);
+  fill(box, 
+    el("div", { class: "toolbar" },
+      el("div", {}, el("h2", {}, `랭킹 · 지원자 ${r.candidates.length}명`),
+        el("div", { class: "sub" }, `판정 ${r.model} · ${r.matched_at.slice(0, 16).replace("T", " ")}`,
+          changed ? " · 가중치 변경 중 (저장되지 않음)" : "")),
+      el("div", {},
+        el("label", { class: "sub" }, el("input", { type: "checkbox", checked: state.showLabels,
+          onchange: (e) => { state.showLabels = e.target.checked; renderRanking(); } }), " 평가용 의도 라벨 표시"),
+        " ", el("button", { onclick: () => runMatch(true), title: "판정은 캐시를 사용" }, "다시 매칭"))),
+    el("table", {}, el("thead", {}, el("tr", {}, ["순위", "점수", "지원자", "분야", "필수 충족", "확인 필요"].map((h) => el("th", {}, h)))),
+      el("tbody", {}, rows)),
+    renderWeights(r.weights),
+  );
+}
+
+function renderWeights(w) {
+  const inputs = WEIGHTS.map(([key, title, min, max, step]) => {
+    const out = el("output", {}, Number(w[key]).toFixed(2));
+    const input = el("input", { type: "range", min, max, step, value: w[key],
+      oninput: (e) => { out.textContent = Number(e.target.value).toFixed(2); scheduleRescore(); } });
+    input.dataset.key = key;
+    return el("label", {}, el("span", {}, title, " ", out), input);
+  });
+  return el("div", {},
+    el("div", { class: "weights", id: "weights" }, inputs,
+      el("button", { onclick: () => { state.result = state.saved; renderRanking(); renderDetail(); } }, "기본값으로")),
+    el("div", { class: "sub" }, "가중치를 바꾸면 저장된 판정으로 점수만 다시 계산합니다 (LLM 호출 없음)."));
+}
+
+let rescoreTimer = null;
+function scheduleRescore() {
+  clearTimeout(rescoreTimer);
+  rescoreTimer = setTimeout(async () => {
+    const weights = {};
+    document.querySelectorAll("#weights input[type=range]").forEach((i) => { weights[i.dataset.key] = Number(i.value); });
+    try {
+      state.result = await api(`/api/postings/${state.current}/rescore`, { method: "POST", body: JSON.stringify(weights) });
+      await renderRanking(); renderDetail();
+    } catch (e) { setStatus(e.message, true); }
+  }, 250);
+}
+
+// ---------- 지원자 상세 ----------
+
+function renderDetail() {
+  const box = $("#detail");
+  const s = state.result && state.result.candidates.find((c) => c.candidate_id === state.selected);
+  if (!s) { fill(box, el("div", { class: "empty" }, "랭킹에서 지원자를 고르면 요건별 근거가 보입니다.")); return; }
+  const best = s.positions.find((p) => p.position === s.position);
+  const quotes = best.judgments.flatMap((j) => j.quotes).map(norm).filter((q) => q.length >= 2);
+  const cand = state.candidates[s.candidate_id];
+  const rows = best.judgments.map((j) => el("tr", {},
+    el("td", {}, j.text, el("div", {}, el("span", { class: "chip " + (j.priority === "must" ? "must" : "pref") }, j.priority === "must" ? "필수" : "우대"),
+      el("span", { class: "chip" }, CATEGORY[j.category] || j.category))),
+    el("td", {}, el("span", { class: "badge s-" + j.status }, STATUS[j.status]),
+      j.rule ? el("div", { class: "sub" }, j.rule === "education_level" ? "학력 규칙" : "경력 규칙") : null,
+      j.flags.length ? el("div", { class: "flag" }, "⚑ " + j.flags.join(", ")) : null),
+    el("td", {}, j.quotes.length ? j.quotes.map((q) => el("div", { class: "quote" }, q)) : el("span", { class: "sub" }, "—"),
+      el("div", { class: "sub" }, j.reason)),
+    el("td", { class: "contrib" }, j.credit === null ? "—" : j.contribution.toFixed(1))));
+  fill(box, 
+    el("div", { class: "toolbar" },
+      el("h2", {}, `${s.rank}위 ${s.name} — ${s.score}점`),
+      el("span", { class: "sub" }, s.position ? `대표 분야: ${s.position}` : "")),
+    s.positions.length > 1 ? el("div", { class: "sub" }, "분야별: ", s.positions.map((p) => `${p.position} ${p.score}`).join(" · ")) : null,
+    el("ul", { class: "summary" }, s.summary.map((line) => el("li", {}, line))),
+    el("table", {}, el("thead", {}, el("tr", {}, ["요건", "판정", "근거 (이력서)", "기여"].map((h) => el("th", {}, h)))),
+      el("tbody", {}, rows)),
+    s.excluded_sensitive.length
+      ? el("p", { class: "sub" }, "법정 우대 — 점수 미반영: " + s.excluded_sensitive.join(", ")) : null,
+    cand ? [el("h3", {}, "이력서 (판정에 쓰인 원문, 인용된 줄 강조)"),
+      el("ol", { class: "resume" }, cand.lines.map((line) => {
+        const n = norm(line);
+        return el("li", { class: quotes.some((q) => n.includes(q) || (n.length > 6 && q.includes(n))) ? "hit" : "" }, line);
+      }))] : null,
+  );
+}
+
+// ---------- 실행 ----------
+
+async function busy(label, fn) {
+  const btn = $("#run-btn"); btn.disabled = true; setStatus(label);
+  try { await fn(); setStatus(""); } catch (e) { setStatus(e.message, true); } finally { btn.disabled = false; }
+}
+
+function runMatch(refresh = false) {
+  return busy("매칭 중… (처음이면 지원자당 판정 호출)", async () => {
+    state.saved = state.result = await api(`/api/postings/${state.current}/match`,
+      { method: "POST", body: JSON.stringify({ refresh: refresh === true }) });
+    await loadPostings(state.current);
+  });
+}
+
+$("#run-form").addEventListener("submit", (e) => {
+  e.preventDefault();
+  const ref = $("#ref").value.trim();
+  if (!ref) return;
+  busy("수집 → 조건 추출 → 매칭 중… 처음 처리하는 공고는 1~2분 걸립니다", async () => {
+    const result = await api("/api/run", { method: "POST", body: JSON.stringify({ ref }) });
+    await loadPostings(result.posting.posting_id);
+  });
+});
+
+loadPostings().catch((e) => setStatus(e.message, true));
+</script>
+</body>
+</html>

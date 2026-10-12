@@ -237,7 +237,7 @@ $ jobfit postings
 상세 본문 `.user_content` 안에 `font-size:0; height:0; overflow:hidden` 스타일의 `<td>`가 있고, 공고 제목과 사람인 직무 카테고리 경로("회계·세무·재무 > 직무·직업 > 재무" 등) 수십 줄이 들어 있다. 화면에는 보이지 않는 검색용 텍스트로 보인다. 이 때문에 이미지 공고가 "아님"으로 판별되었다.
 
 - 조치: 본문 텍스트 길이에서 `display:none`, `visibility:hidden`, `font-size:0` 요소를 제외 (`HIDDEN_STYLE`). 실제 상세 HTML(공고 B)을 `tests/fixtures/saramin_detail_real.html` 회귀 fixture로 추가.
-- 이 숨김 텍스트는 사람인이 붙인 분류 정보이고 공고 본문이 아니므로, 이후 단계에서 **매칭 조건으로 쓰지 않는다** (조건은 이미지에서만 추출).
+- 이 숨김 텍스트는 사람인이 붙인 분류 정보이고 공고 본문이 아니므로, 이후 단계에서 **매칭 조건으로 쓰지 않는다**. 조건은 이미지에서만 추출한다 ([ADR-0008](../adr/0008-image-only-conditions.md)).
 
 ### 이미지 내용 확인 (육안)
 

@@ -26,4 +26,4 @@
 | 02 | 이미지 전처리·구조화 | [spec](specs/2026-10-12-02-posting-preprocessing-design.md) | [plan](plans/2026-10-12-02-posting-preprocessing.md) | 완료 |
 | 03 | 지원자 매칭 스코어링 | [spec](specs/2026-10-12-03-candidate-scoring-design.md) | [plan](plans/2026-10-12-03-candidate-scoring.md) | 완료 |
 | 04 | API · UI | [spec](specs/2026-10-12-04-api-and-ui-design.md) | [plan](plans/2026-10-12-04-api-and-ui.md) | 완료 |
-| 05 | 정보가 부족한 공고 대응 | [spec](specs/2026-10-12-05-low-information-postings-design.md) | [plan](plans/2026-10-12-05-low-information-postings.md) | 구현 완료 — 실제 판정 확인 대기 |
+| 05 | 정보가 부족한 공고 대응 | [spec](specs/2026-10-12-05-low-information-postings-design.md) | [plan](plans/2026-10-12-05-low-information-postings.md) | 완료 |

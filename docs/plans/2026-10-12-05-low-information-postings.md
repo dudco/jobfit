@@ -54,4 +54,5 @@
 - [x] `jobfit match 55240124 --refresh` — 도출 요건 29개가 판정 프롬프트에 들어가 KT&G만 새로 호출 (지원자 12명, 약 $0.4). S-OIL·오리온은 `jobfit match 55189170 55162188`로 다시 계산되지만 판정 프롬프트가 같아 캐시 적중 (호출 0)
 - [x] 스펙 05 5장 기록: 점수 분포, 대표 분야가 배경과 맞는지, 도출 요건 판정의 인용 (1차 — 대부분 "해당 없음"으로 판정돼 전 분야 동일)
 - [x] 보정 (TDD): `test_derived_requirement_cannot_be_not_applicable`(도출 요건의 해당 없음 → 미충족), `test_derived_requirement_line_tells_judge_to_assume_that_position`(도출 요건 줄에만 판정 지시, 공통 프롬프트 불변)
-- [ ] 보정 후 재실행 `jobfit match 55240124 --refresh` (약 $0.4) → 5장에 2차 결과, 스펙 05 4장 마지막 항목 체크
+- [x] 보정 후 재실행 `jobfit match 55240124 --refresh` (약 $0.4) → 5장에 2차 결과, 스펙 05 4장 마지막 항목 체크
+- [x] 분야 동점 깨기 (TDD): `test_position_tie_is_broken_by_stronger_judgments_without_changing_score` → `_pick()`이 (점수, 충족 수, 부분 수)로 대표 분야 선택

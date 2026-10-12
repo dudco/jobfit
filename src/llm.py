@@ -135,3 +135,8 @@ class CachedLLM:
             json.dumps({"tag": tag, "model": model, "response": response}, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
+
+
+def cached_openai(cache_dir: Path) -> CachedLLM:
+    """응답 캐시(ADR-0014)를 거치는 OpenAI 클라이언트. CLI·API 공용. 캐시 적중이면 API 키가 없어도 된다."""
+    return CachedLLM(OpenAILLM, cache_dir)

@@ -28,6 +28,7 @@ class Settings:
     slice_height: int = 1200           # 분할 목표 높이. 0 = 분할하지 않음 (ADR-0012)
     max_width: int = 1000              # 이보다 넓은 이미지는 비율 유지 축소
     judge_model: str = DEFAULT_JUDGE_MODEL
+    candidates_dir: Path = ROOT / "dataset" / "candidates"   # 지원자 JSON (이력서 전처리 결과)
 
     @property
     def llm_cache_dir(self) -> Path:
@@ -47,4 +48,5 @@ def load_settings(*, dotenv_path: Optional[Path] = ROOT / ".env") -> Settings:
         slice_height=int(env("JOBFIT_SLICE_HEIGHT", "1200")),
         max_width=int(env("JOBFIT_MAX_WIDTH", "1000")),
         judge_model=env("JOBFIT_JUDGE_MODEL", DEFAULT_JUDGE_MODEL),
+        candidates_dir=Path(env("JOBFIT_CANDIDATES_DIR", str(ROOT / "dataset" / "candidates"))),
     )

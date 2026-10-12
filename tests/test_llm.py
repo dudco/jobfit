@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import pytest
 from pydantic import BaseModel
 
-from llm import CachedLLM, OpenAILLM, image_data_url
+from llm import CachedLLM, OpenAILLM, cached_openai, image_data_url
 
 from .fakes import FakeLLM
 
@@ -111,3 +111,9 @@ def test_cache_key_uses_pixels_not_encoded_bytes(tmp_path):
     cached.vision_text(model="m", system="s", image=a)
     cached.vision_text(model="m", system="s", image=b)
     assert len(inner.calls) == 1
+
+
+def test_cached_openai_needs_no_key_until_called(tmp_path, monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    llm = cached_openai(tmp_path)          # 만들 때 API 키를 요구하지 않는다 (캐시 적중이면 끝까지)
+    assert isinstance(llm, CachedLLM) and llm.cache_dir == tmp_path

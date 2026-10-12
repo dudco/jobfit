@@ -10,7 +10,7 @@ from rich.markup import escape
 from rich.table import Table
 
 from crawler.saramin import parse_rec_idx
-from llm import CachedLLM, OpenAILLM
+from llm import CachedLLM, OpenAILLM, cached_openai
 from preprocessing import service as preprocessing_service
 from preprocessing.criteria import criteria_dir, load_criteria
 from scoring import service as scoring_service
@@ -56,7 +56,7 @@ def postings():
 
 def make_llm(settings) -> CachedLLM:
     """응답 캐시(ADR-0014)를 거치는 OpenAI 클라이언트. 캐시 적중이면 API 키가 없어도 된다."""
-    return CachedLLM(OpenAILLM, settings.llm_cache_dir)
+    return cached_openai(settings.llm_cache_dir)
 
 
 @app.command()
@@ -140,7 +140,6 @@ def evaluate(
 
 # --- ③ 스코어링 (스펙 03) ---
 
-CANDIDATES_DIR = ROOT / "dataset" / "candidates"
 STATUS_TEXT = {"met": "[green]충족[/green]", "partial": "[yellow]부분[/yellow]", "unmet": "[red]미충족[/red]",
                "unknown": "[cyan]확인 필요[/cyan]", "not_applicable": "[dim]해당 없음[/dim]"}
 
@@ -168,12 +167,13 @@ def _print_ranking(result, candidates) -> None:
 @app.command("match")
 def match_cmd(
     refs: List[str] = typer.Argument(..., help="사람인 공고 URL 또는 rec_idx (여러 개 가능)"),
-    candidates: Path = typer.Option(CANDIDATES_DIR, "--candidates", help="지원자 JSON 디렉터리"),
+    candidates: Optional[Path] = typer.Option(None, "--candidates", help="지원자 JSON 디렉터리 (기본: 설정 candidates_dir)"),
     refresh: bool = typer.Option(False, "--refresh", help="기존 결과를 무시하고 다시 (판정은 캐시 사용)"),
 ):
     """지원자를 공고 조건으로 판정·점수화하고 랭킹을 data/results/에 저장."""
     settings = load_settings()
     llm = make_llm(settings)
+    candidates = candidates or settings.candidates_dir
     people = load_candidates(candidates)
     for ref in refs:
         result = scoring_service.match(ref, settings, llm=llm, candidates_dir=candidates, refresh=refresh, log=_log)
@@ -184,7 +184,7 @@ def match_cmd(
 def result(
     ref: str = typer.Argument(..., help="rec_idx 또는 URL"),
     candidate: Optional[str] = typer.Option(None, "--candidate", help="지원자 id — 요건별 판정·근거·기여 점수"),
-    candidates: Path = typer.Option(CANDIDATES_DIR, "--candidates", help="지원자 JSON 디렉터리 (의도 라벨 표시용)"),
+    candidates: Optional[Path] = typer.Option(None, "--candidates", help="지원자 JSON 디렉터리 (의도 라벨 표시용)"),
 ):
     """저장된 매칭 결과. --candidate로 요건별 근거를 본다."""
     settings = load_settings()
@@ -194,7 +194,7 @@ def result(
         console.print(f"[red]매칭 결과가 없습니다 — 먼저 `jobfit match {posting_id}`를 실행하세요[/red]")
         raise typer.Exit(1)
     if candidate is None:
-        _print_ranking(res, load_candidates(candidates))
+        _print_ranking(res, load_candidates(candidates or settings.candidates_dir))
         return
     s = next((x for x in res.candidates if x.candidate_id == candidate), None)
     if s is None:

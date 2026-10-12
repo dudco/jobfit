@@ -1,4 +1,4 @@
-from settings import load_settings
+from settings import ROOT, load_settings
 
 KEYS = ("JOBFIT_DATA_DIR", "JOBFIT_REQUEST_INTERVAL")
 
@@ -49,3 +49,10 @@ def test_judge_model_from_env_and_default(monkeypatch):
     assert load_settings(dotenv_path=None).judge_model == "gpt-4.1"
     monkeypatch.setenv("JOBFIT_JUDGE_MODEL", "j-model")
     assert load_settings(dotenv_path=None).judge_model == "j-model"
+
+
+def test_candidates_dir_default_and_env(monkeypatch, tmp_path):
+    monkeypatch.delenv("JOBFIT_CANDIDATES_DIR", raising=False)
+    assert load_settings(dotenv_path=None).candidates_dir == ROOT / "dataset" / "candidates"
+    monkeypatch.setenv("JOBFIT_CANDIDATES_DIR", str(tmp_path))
+    assert load_settings(dotenv_path=None).candidates_dir == tmp_path

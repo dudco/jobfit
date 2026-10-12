@@ -93,3 +93,16 @@ def test_criteria_command_without_result_exits_1(monkeypatch, tmp_path):
     result = CliRunner().invoke(cli.app, ["criteria", "55"])
     assert result.exit_code == 1
     assert "jobfit extract 55" in result.output
+
+
+def test_evaluate_command_prints_metrics(monkeypatch, tmp_path):
+    monkeypatch.setenv("JOBFIT_DATA_DIR", str(tmp_path))
+    save_criteria(criteria_dir(tmp_path, "saramin", "55"), sample_criteria())
+    truth = tmp_path / "truth.yaml"
+    truth.write_text('posting_id: "55"\nrequirements:\n'
+                     '  - {text: 고졸 이상, priority: must, category: education}\n'
+                     '  - {text: 인근거주자, priority: preferred, category: other}\n', encoding="utf-8")
+    result = CliRunner().invoke(cli.app, ["evaluate", "55", "--truth", str(truth)])
+    assert result.exit_code == 0, result.output
+    assert "재현율 50%" in result.output and "정밀도 50%" in result.output
+    assert "누락: 인근거주자" in result.output and "추가: r2 보훈" in result.output

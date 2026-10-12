@@ -1,0 +1,25 @@
+# 정답 요건 목록 — 사람이 공고 이미지를 보고 작성 (평가 전용, 파이프라인은 읽지 않는다)
+# 공고: ㈜오리온 청주공장 생산직 채용 (rec_idx 55162188)
+posting_id: "55162188"
+requirements:
+  - text: 고등학교 졸업 이상
+    priority: must
+    category: education
+  - text: 야간근무 가능
+    priority: must
+    category: other
+  - text: 인근거주자
+    priority: preferred
+    category: other
+  - text: 해당직무 근무경험자
+    priority: preferred
+    category: experience
+  - text: 국가보훈대상자
+    priority: preferred
+    category: other
+    sensitive: true
+  - text: 장애인은 관련법에 의거 우대
+    priority: preferred
+    category: other
+    sensitive: true
+    aliases: [장애인 우대, 국가보훈대상자 및 장애인은 관련법에 의거 우대합니다]

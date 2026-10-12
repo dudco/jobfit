@@ -1,0 +1,47 @@
+# 정답 요건 목록 — 사람이 공고 이미지를 보고 작성 (평가 전용, 파이프라인은 읽지 않는다)
+# 공고: S-OIL 2026 사무직 신입사원 채용 (rec_idx 55189170)
+posting_id: "55189170"
+requirements:
+  - text: 대학(원) 기졸업자 및 2027년 2월 이내 졸업 예정자
+    priority: must
+    category: education
+  - text: 2027년 1월 입사가 가능한 자
+    priority: must
+    category: other
+  - text: 공고 마감일 기준 유효한 공인영어성적(TOEIC, TOEFL, TOEIC Speaking, OPIc 등) 보유자
+    priority: must
+    category: language
+  - text: 남성의 경우, 병역필 또는 군 면제자
+    priority: must
+    category: other
+  - text: 해외여행에 결격사유가 없는 자
+    priority: must
+    category: other
+  - text: 화공 전공
+    priority: must
+    category: education
+    positions: [공정]
+  - text: 기계/재료/금속/전기/전자 전공
+    priority: must
+    category: education
+    positions: [설비기술]
+  - text: 화공/안전/환경 전공
+    priority: must
+    category: education
+    positions: [안전환경]
+  - text: 상경계열 우대
+    priority: preferred
+    category: education
+    positions: [경영전략, 경영지원, 영업/마케팅, 재무, 수급]
+  - text: 장애인 및 보훈 대상자는 관계 법령에 의거하여 우대
+    priority: preferred
+    category: other
+    sensitive: true
+    aliases: [장애인 우대, 보훈 대상자 우대]
+  - text: 영어 회화 능통자
+    priority: preferred
+    category: language
+  - text: 엔지니어 직무 지원자의 경우, 직무 관련 자격증 소지자
+    priority: preferred
+    category: certification
+    positions: [공정, 설비기술, 안전환경]

@@ -1,7 +1,8 @@
 """CLI 어댑터. 서비스 함수를 호출하고 결과를 출력만 한다 (ADR-0002)."""
 from __future__ import annotations
 
-from typing import List
+from pathlib import Path
+from typing import List, Optional
 
 import typer
 from rich.console import Console
@@ -13,7 +14,7 @@ from preprocessing import service as preprocessing_service
 from preprocessing.criteria import criteria_dir, load_criteria
 from crawler import service
 from crawler.snapshot import list_snapshots
-from settings import load_settings
+from settings import ROOT, load_settings
 
 app = typer.Typer(add_completion=False, no_args_is_help=True, help="이미지 채용공고 수집·구조화·매칭")
 console = Console()
@@ -103,3 +104,30 @@ def models():
     load_settings()  # .env 로드
     for name in OpenAILLM().list_models():
         console.print(name)
+
+
+@app.command()
+def evaluate(
+    ref: str = typer.Argument(..., help="rec_idx 또는 URL"),
+    truth: Optional[Path] = typer.Option(None, "--truth", help="정답 파일 (기본: tests/fixtures/criteria_truth/{rec_idx}.yaml)"),
+):
+    """추출 결과를 사람이 만든 정답 요건 목록과 비교 (스펙 02 실험)."""
+    from preprocessing.evaluate import evaluate as run_evaluation, load_truth
+
+    settings = load_settings()
+    posting_id = parse_rec_idx(ref)
+    c = load_criteria(criteria_dir(settings.data_dir, "saramin", posting_id))
+    if c is None:
+        console.print(f"[red]추출 결과가 없습니다 — 먼저 `jobfit extract {posting_id}`를 실행하세요[/red]")
+        raise typer.Exit(1)
+    truth_path = truth or ROOT / "tests" / "fixtures" / "criteria_truth" / f"{posting_id}.yaml"
+    ev = run_evaluation(load_truth(truth_path), c)
+    console.print(f"{posting_id}  재현율 {ev.recall:.0%}  정밀도 {ev.precision:.0%}  필수 재현율 {ev.must_recall:.0%}  "
+                  f"필수/우대 일치 {ev.priority_agreement:.0%}  유형 일치 {ev.category_agreement:.0%}")
+    for t in ev.missed:
+        console.print(f"  누락: {t.text}")
+    for r in ev.extra:
+        console.print(f"  추가: {r.id} {r.text}")
+    for t, r in ev.matched:
+        if t.priority != r.priority or t.category != r.category:
+            console.print(f"  불일치: {r.id} {r.text} — 정답 {t.priority}/{t.category}, 추출 {r.priority}/{r.category}")

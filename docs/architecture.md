@@ -62,6 +62,8 @@ API·UI를 처음부터 만들지 않는 이유: ①·②만 있는 상태에서
 
 ## 데이터 디렉터리
 
+로컬 전용이며 버전 관리하지 않는다 ([ADR-0007](adr/0007-data-not-versioned.md)).
+
 ```
 data/
   postings/{site}/{posting_id}/      ① 원본 스냅샷

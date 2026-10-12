@@ -1106,7 +1106,7 @@ git commit -m "test(crawler): 실제 사람인 상세 HTML로 사이트 가정(H
 ### Task 10: 공고 2건 수집과 관찰 기록 [수동]
 
 **Files:**
-- Create: `data/postings/saramin/<A>/…`, `data/postings/saramin/<B>/…`
+- Create: `data/postings/saramin/<A>/…`, `data/postings/saramin/<B>/…` (로컬 전용, [ADR-0007](../adr/0007-data-not-versioned.md))
 - Modify: 스펙 9장, `docs/README.md`
 
 - [ ] **Step 1: 공고 B 고르기**
@@ -1152,6 +1152,6 @@ PY
 - `docs/README.md` 진행 현황 01 → 완료
 
 ```bash
-git add data/postings docs
-git commit -m "data: 이미지형 공고 2건 원본 스냅샷과 수집 관찰 기록"
+git add docs
+git commit -m "docs: 공고 2건 수집 관찰 기록"   # data/는 커밋하지 않는다 (ADR-0007)
 ```

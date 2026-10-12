@@ -4,3 +4,6 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .DS_Store
+
+# 수집·처리 산출물 (ADR-0007)
+data/

@@ -19,6 +19,15 @@ ABSENCE = re.compile(r"무관")       # "경력 무관", "전공무관" — 조�
 PREFERENCE = re.compile(r"우대")     # "전공무관(상경계열 우대)"처럼 우대가 붙으면 요건으로 남긴다
 
 
+BROKEN_ESCAPE = re.compile(r"\x00([0-9a-fA-F]{2})")          # '\u00b7'이 '\u0000' + 'b7'로 깨진 경우
+CONTROL = re.compile(r"[\x00-\x08\x0b-\x1f\x7f]")
+
+
+def clean_text(text: str) -> str:
+    """LLM 출력의 깨진 유니코드 이스케이프를 복구하고 남은 제어 문자를 버린다 (줄바꿈·탭은 유지)."""
+    return CONTROL.sub("", BROKEN_ESCAPE.sub(lambda m: chr(int(m.group(1), 16)), text))
+
+
 def _compact(text: str) -> str:
     return re.sub(r"\s+", "", text)
 
@@ -89,7 +98,9 @@ def warnings_for(requirements: list[Requirement]) -> list[str]:
 
 def build_criteria(out: StructuredPosting, transcript: str, *, source: CriteriaSource,
                    models: dict[str, str], extracted_at: str) -> PostingCriteria:
-    candidates = dedupe(out.requirements)
+    cleaned = [r.model_copy(update={"text": clean_text(r.text), "normalized": clean_text(r.normalized),
+                                    "quote": clean_text(r.quote)}) for r in out.requirements]
+    candidates = dedupe(cleaned)
     dropped = [r.text for r in candidates if means_no_condition(r.text)]
     known_positions = {p.name for p in out.positions}
     requirements: list[Requirement] = []

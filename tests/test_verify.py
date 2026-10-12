@@ -1,6 +1,6 @@
 from preprocessing.criteria import CriteriaSource
 from preprocessing.structure import LLMConditions, LLMPosition, LLMRequirement, StructuredPosting
-from preprocessing.verify import build_criteria, find_fragments, find_quote
+from preprocessing.verify import build_criteria, clean_text, find_fragments, find_quote
 
 TRANSCRIPT = (
     "<!-- slice 00 image=0 part=0 -->\n## 지원자격\n- 고등학교 졸업 이상\n- 야간근무 가능\n\n"
@@ -111,3 +111,17 @@ def test_requirement_positions_must_name_known_positions():
               positions=[LLMPosition(name="공정", group=None, duties=None, location=None)])
     assert c.requirements[0].flags == ["unknown_position"]
     assert c.warnings == ["모집분야 목록에 없는 분야를 가리키는 요건: r1"]
+
+
+def test_broken_unicode_escape_in_llm_output_is_repaired():
+    """LLM이 '·'(U+00B7)를 '\\u0000b7'로 잘못 이스케이프해 NUL + 'b7'이 된 경우 (공고 55240124 관찰)."""
+    assert clean_text("\x00b7 국가 보훈 대상자") == "\u00b7 국가 보훈 대상자"
+    assert clean_text("줄\x07바꿈\n유지") == "줄바꿈\n유지"                 # 다른 제어 문자는 버림, 줄바꿈은 유지
+    transcript = TRANSCRIPT + "\n\u00b7 국가보훈대상자 우대"
+    c = build_criteria(StructuredPosting(
+        title="t", company=None, job_family="j", positions=[],
+        requirements=[llm_req("국가보훈", "preferred", quote="\x00b7 국가보훈대상자 우대", sensitive=True),
+                      llm_req("고등학교 졸업 이상", quote="- 고등학교 졸업 이상")],
+        conditions=LLMConditions(employment_type=None, locations=[], schedule=None, others=[])),
+        transcript, source=SRC, models={}, extracted_at="t1")
+    assert c.requirements[0].flags == [] and c.requirements[0].evidence.quote.startswith("\u00b7")

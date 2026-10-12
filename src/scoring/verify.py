@@ -9,7 +9,7 @@ from __future__ import annotations
 import re
 
 from preprocessing.criteria import Requirement
-from preprocessing.verify import find_fragments, find_quote
+from preprocessing.verify import clean_text, find_fragments, find_quote
 
 from .candidate import Candidate, render
 from .judge import LLMJudgeOutput, LLMJudgment
@@ -40,9 +40,11 @@ def judge_requirements(out: LLMJudgeOutput, requirements: list[Requirement], can
         if j is None:
             status, quotes, reason, flags, picked = "unknown", [], "판정 누락", ["not_judged"], []
         else:
-            quotes = [LINE_NO.sub("", q).strip() for q in j.quotes if q.strip()]
+            quotes = [LINE_NO.sub("", clean_text(q)).strip() for q in j.quotes if q.strip()]
             status, reason, flags, picked = j.status, j.reason, [], j.relevant_experience
-            if not all(_found(q, text) for q in quotes):
+            if status == "unknown":
+                quotes = [q for q in quotes if _found(q, text)]    # 점수에 영향 없음 — 틀린 인용만 버린다
+            elif not all(_found(q, text) for q in quotes):
                 status, flags = "unknown", ["quote_not_found"]
             elif status in NEEDS_EVIDENCE and not quotes:
                 status, flags = "unknown", ["no_evidence"]

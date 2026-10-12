@@ -60,3 +60,15 @@ def test_experience_rule_computes_years_from_selected_jobs():
     got = run(reqs, ("r1", "met", ["[경력 1] A식품 · 포장 · 2022-01~2023-12"], [1]))
     assert (got["r1"].status, got["r1"].rule) == ("partial", "experience_years")
     assert "2.0년" in got["r1"].reason and "3년" in got["r1"].reason
+
+
+def test_bad_quotes_on_unknown_are_dropped_without_flag():
+    """'확인 필요' 판정에 공고 문구를 인용으로 붙여도 점수에 영향이 없으므로 표시하지 않고 인용만 버린다 (55240124 관찰)."""
+    got = run([make_requirement("r1", "해외여행에 결격 사유가 없는 자")],
+              ("r1", "unknown", ["해외여행에 결격 사유가 없는 자"], []))
+    assert (got["r1"].status, got["r1"].quotes, got["r1"].flags) == ("unknown", [], [])
+
+
+def test_not_applicable_with_bad_quote_is_downgraded():
+    got = run([make_requirement("r1", "남성의 경우 병역필")], ("r1", "not_applicable", ["[병역] 비대상"], []))
+    assert (got["r1"].status, got["r1"].flags) == ("unknown", ["quote_not_found"])

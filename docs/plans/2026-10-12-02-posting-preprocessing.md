@@ -2194,7 +2194,7 @@ git commit -m "feat(preprocessing): 정답 대비 평가 도구(jobfit evaluate)
 - Create: `.env` (커밋 안 함), `data/criteria/…`, `data/cache/llm/…` (로컬)
 - Modify: 스펙 02 11장, ADR-0010·0012 (기본값 확정), `src/settings.py` (기본 모델·분할 높이), `README.md`
 
-- [ ] **Step 1: 정답 목록 검토 [수동]**
+- [x] **Step 1: 정답 목록 검토 [수동]** — 조각 이미지와 대조해 확인 (스펙 02 11장 누락 점검)
 
 `tests/fixtures/criteria_truth/*.yaml`을 원본 이미지와 대조해 빠진 요건·잘못된 필수/우대·유형을 고친다.
 
@@ -2228,26 +2228,26 @@ done
 ```
 기록: 높이별 재현율·정밀도, 전사에서 숫자·고유명사 오독 수. 재현율이 같으면 조각이 적은 쪽.
 
-- [ ] **Step 5: 실험 X2 — 모델** — 비전 모델 비교는 생략 (X1 진단: 전사는 충분, 오류는 구조화). 구조화 모델만 비교 → Task 13 Step 4
+- [x] **Step 5: 실험 X2 — 모델** — 비전 모델 비교는 생략 (X1 진단: 전사는 충분, 오류는 구조화). 구조화 모델만 비교 → Task 13 Step 4
 
 X1에서 고른 높이로, 비전 모델을 상위/경량 2종으로 바꿔 같은 비교. 차이가 없으면 경량.
 
-- [ ] **Step 6: 실험 X3 — 수용 기준 확인**
+- [x] **Step 6: 실험 X3 — 수용 기준 확인**
 
 최종 설정에서 스펙 02 10장 수용 기준(필수 재현율 100%, 재현율·정밀도 ≥ 90%, 필수/우대 일치 100%, `quote_not_found` 0건)을 확인한다. 미달이면 원인(전사 / 구조화 프롬프트 / 정답 목록)을 분류해 고치고 다시 잰다.
 
-- [ ] **Step 7: 실험 X4 (선택) — OCR 기준선**
+- [x] **Step 7: 실험 X4 (선택) — OCR 기준선** — 하지 않음 (기록)
 
 `brew install tesseract tesseract-lang` 후 조각 이미지를 `tesseract <조각>.png - -l kor`로 전사해 비전 전사와 비교한다. 설치하지 않으면 건너뛰고 그 사실을 기록한다.
 
-- [ ] **Step 8: 캐시 확인**
+- [x] **Step 8: 캐시 확인** — 키·네트워크 없는 환경에서 캐시만으로 완료
 
 ```bash
 jobfit extract 55162188 55189170 --refresh   # 같은 설정 재실행
 ```
 Expected: OpenAI 대시보드 기준 추가 호출 0건 (캐시 적중)
 
-- [ ] **Step 9: 기록과 기본값 확정**
+- [x] **Step 9: 기록과 기본값 확정**
 
 - 스펙 02 11장 표, ADR-0010(기본 모델)·ADR-0012(분할 높이) 갱신
 - `src/settings.py`의 `DEFAULT_VISION_MODEL`, `DEFAULT_TEXT_MODEL`, `slice_height` 기본값 반영
@@ -2283,7 +2283,7 @@ X1 진단(스펙 02 11장): 분할 높이 1200이 최선, 전사는 충분하고
 Run: `pytest -q`
 Expected: 79 passed
 
-- [ ] **Step 4: 재실행·평가 [수동 — API]**
+- [x] **Step 4: 재실행·평가 [수동 — API]**
 
 ```bash
 uv pip install -e ".[dev]"
@@ -2294,6 +2294,10 @@ JOBFIT_TEXT_MODEL=gpt-4.1 jobfit evaluate 55162188 && JOBFIT_TEXT_MODEL=gpt-4.1 
 ```
 캐시 키가 바뀌어 전사도 한 번 다시 호출된다 (조각 6개). 이후 반복 실행은 구조화만 호출된다.
 
-- [ ] **Step 5: 수용 기준 판정과 기록**
+- [x] **Step 6: 이어 붙인 인용 인정 (TDD)**
+
+X2에서 인용 못 찾음 2건이 모두 떨어진 줄을 이어 붙인 인용이었다. `tests/test_verify.py`에 `test_find_fragments_accepts_quotes_spliced_from_separate_lines`, `test_spliced_quote_is_located_and_flagged_without_warning` 추가 → FAIL 확인 → `verify.py`에 `find_fragments()`와 `quote_spliced` 플래그 구현 → PASS (81 passed). 커밋 `fix(preprocessing): 떨어진 줄을 이어 붙인 근거 인용 인정`
+
+- [x] **Step 5: 수용 기준 판정과 기록**
 
 스펙 02 10장 기준으로 판정하고, 11장 X2·X3 표, ADR(구조화 모델)·`DEFAULT_TEXT_MODEL`을 갱신한다.

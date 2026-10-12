@@ -41,7 +41,7 @@ jobfit --help
 | `JOBFIT_DATA_DIR` | `<레포>/data` | 수집·처리 산출물 저장 위치 |
 | `JOBFIT_REQUEST_INTERVAL` | `1.5` | 사람인 요청 사이 대기 시간(초) |
 | `JOBFIT_VISION_MODEL` | `gpt-4.1` | 이미지 전사 모델 |
-| `JOBFIT_TEXT_MODEL` | `gpt-4.1-mini` | 구조화 모델 |
+| `JOBFIT_TEXT_MODEL` | `gpt-4.1` | 구조화 모델 |
 | `JOBFIT_SLICE_HEIGHT` | `1200` | 긴 이미지를 자르는 목표 높이(px). `0`이면 자르지 않음 |
 | `JOBFIT_MAX_WIDTH` | `1000` | 이보다 넓은 이미지는 축소 |
 

@@ -23,5 +23,5 @@
 | # | 단계 | 스펙 | 계획 | 상태 |
 |---|---|---|---|---|
 | 01 | 공고 이미지 수집 | [spec](specs/2026-10-12-01-posting-crawler-design.md) | [plan](plans/2026-10-12-01-posting-crawler.md) | 완료 |
-| 02 | 이미지 전처리·구조화 | [spec](specs/2026-10-12-02-posting-preprocessing-design.md) | [plan](plans/2026-10-12-02-posting-preprocessing.md) | 구현 완료 — 실제 실행·실험(Task 12) 대기 |
+| 02 | 이미지 전처리·구조화 | [spec](specs/2026-10-12-02-posting-preprocessing-design.md) | [plan](plans/2026-10-12-02-posting-preprocessing.md) | 완료 |
 | 03 | 스코어링 | — | — | 02 완료 후 작성 |

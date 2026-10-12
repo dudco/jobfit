@@ -14,7 +14,7 @@ DEFAULT_UA = (
     "(KHTML, like Gecko) Chrome/126.0 Safari/537.36"
 )
 DEFAULT_VISION_MODEL = "gpt-4.1"      # 스펙 02 실험 X2로 확정 (ADR-0010)
-DEFAULT_TEXT_MODEL = "gpt-4.1-mini"
+DEFAULT_TEXT_MODEL = "gpt-4.1"   # 스펙 02 실험 X2: mini는 유의사항의 우대 문구를 놓침
 
 
 @dataclass(frozen=True)

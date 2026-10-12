@@ -1,0 +1,64 @@
+{
+  "id": "orion-perfect-2",
+  "name": "이도현",
+  "headline": "제과 라인 오퍼레이터 3년",
+  "address": "충북 청주시 청원구 오창읍",
+  "desired_positions": [],
+  "education": [
+    {
+      "level": "associate",
+      "school": "충북OO대학교",
+      "status": "graduated",
+      "major": "식품공학과",
+      "graduation": "2020-02"
+    }
+  ],
+  "experiences": [
+    {
+      "company": "OO제과 진천공장",
+      "role": "제과 라인 오퍼레이터",
+      "start": "2022-01",
+      "end": "2024-12",
+      "description": "반죽 배합기·성형기 운전, 위생 점검"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "식품기사",
+      "acquired": "2021-06"
+    }
+  ],
+  "languages": [],
+  "military": "군필 (육군 병장 만기전역, 2020-03~2021-09)",
+  "declarations": [
+    "3조 2교대 근무 가능"
+  ],
+  "skills": [],
+  "self_intro": "배합부터 성형까지 제과 공정 전반을 경험했습니다.",
+  "source": {
+    "method": "mock"
+  },
+  "meta": {
+    "target_posting": "55162188",
+    "label": "perfect",
+    "intent": "다른 표현으로 충족 — 전문학사(고졸 이상, 학력 서열 규칙), 오창읍(청주), 제과 라인, 3조 2교대(야간)",
+    "expected": [
+      {
+        "requirement": "고등학교",
+        "status": "met"
+      },
+      {
+        "requirement": "야간근무",
+        "status": "met"
+      },
+      {
+        "requirement": "인근거주",
+        "status": "met"
+      },
+      {
+        "requirement": "근무경험",
+        "status": "met"
+      }
+    ]
+  }
+}

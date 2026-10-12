@@ -1,0 +1,53 @@
+{
+  "id": "orion-partial-3",
+  "name": "강태윤",
+  "headline": "물류센터 근무 경력",
+  "address": "세종특별자치시 조치원읍",
+  "desired_positions": [],
+  "education": [
+    {
+      "level": "high_school",
+      "school": "세종OO고등학교",
+      "status": "graduated",
+      "graduation": "2022-02"
+    }
+  ],
+  "experiences": [
+    {
+      "company": "OO물류 세종센터",
+      "role": "피킹·출고 작업자",
+      "start": "2024-03",
+      "end": "2025-02",
+      "description": "주문 상품 피킹, 출고 검수"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "지게차운전기능사",
+      "acquired": "2023-10"
+    }
+  ],
+  "languages": [],
+  "military": "군필 (육군 병장 만기전역, 2022-04~2023-10)",
+  "declarations": [],
+  "skills": [],
+  "self_intro": "체력에 자신 있습니다.",
+  "source": {
+    "method": "mock"
+  },
+  "meta": {
+    "target_posting": "55162188",
+    "label": "partial",
+    "intent": "야간근무 언급 없음(확인 필요), 물류 피킹(인접 경험), 세종 거주(인접 지역)",
+    "expected": [
+      {
+        "requirement": "야간근무",
+        "status": "unknown"
+      },
+      {
+        "requirement": "근무경험",
+        "status": "partial"
+      }
+    ]
+  }
+}

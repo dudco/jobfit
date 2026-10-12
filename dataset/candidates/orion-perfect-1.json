@@ -1,0 +1,62 @@
+{
+  "id": "orion-perfect-1",
+  "name": "김영숙",
+  "headline": "식품 포장 생산직 3년",
+  "address": "충북 청주시 흥덕구",
+  "desired_positions": [
+    "생산직"
+  ],
+  "education": [
+    {
+      "level": "high_school",
+      "school": "청주OO고등학교",
+      "status": "graduated",
+      "graduation": "2015-02"
+    }
+  ],
+  "experiences": [
+    {
+      "company": "OO식품 청주공장",
+      "role": "포장 생산직",
+      "start": "2021-03",
+      "end": "2024-02",
+      "description": "과자 포장 라인 운영, 제품 검수"
+    }
+  ],
+  "certifications": [],
+  "languages": [],
+  "military": null,
+  "declarations": [
+    "야간근무 가능"
+  ],
+  "skills": [
+    "포장기 운전"
+  ],
+  "self_intro": "식품 공장에서 3년간 포장 라인을 맡았습니다.",
+  "source": {
+    "method": "mock"
+  },
+  "meta": {
+    "target_posting": "55162188",
+    "label": "perfect",
+    "intent": "공고와 같은 단어로 모든 요건 충족 (고졸·청주 거주·식품 포장 경험·야간근무 가능)",
+    "expected": [
+      {
+        "requirement": "야간근무",
+        "status": "met"
+      },
+      {
+        "requirement": "인근거주",
+        "status": "met"
+      },
+      {
+        "requirement": "근무경험",
+        "status": "met"
+      },
+      {
+        "requirement": "고등학교",
+        "status": "met"
+      }
+    ]
+  }
+}

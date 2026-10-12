@@ -1,0 +1,56 @@
+{
+  "id": "orion-partial-1",
+  "name": "서지민",
+  "headline": "성실한 신입 지원자",
+  "address": "서울 관악구",
+  "desired_positions": [],
+  "education": [
+    {
+      "level": "high_school",
+      "school": "서울OO고등학교",
+      "status": "graduated",
+      "graduation": "2023-02"
+    }
+  ],
+  "experiences": [
+    {
+      "company": "OO카페",
+      "role": "바리스타 아르바이트",
+      "start": "2023-03",
+      "end": "2025-02",
+      "description": "음료 제조, 매장 관리"
+    }
+  ],
+  "certifications": [],
+  "languages": [],
+  "military": null,
+  "declarations": [
+    "야간근무 가능"
+  ],
+  "skills": [
+    "바리스타"
+  ],
+  "self_intro": "새로운 일을 빠르게 배우는 편입니다.",
+  "source": {
+    "method": "mock"
+  },
+  "meta": {
+    "target_posting": "55162188",
+    "label": "partial",
+    "intent": "필수는 모두 충족하지만 우대(인근 거주·생산 경험)가 없음",
+    "expected": [
+      {
+        "requirement": "야간근무",
+        "status": "met"
+      },
+      {
+        "requirement": "인근거주",
+        "status": "unmet"
+      },
+      {
+        "requirement": "근무경험",
+        "status": "unmet"
+      }
+    ]
+  }
+}

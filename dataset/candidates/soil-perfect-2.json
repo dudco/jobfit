@@ -1,0 +1,88 @@
+{
+  "id": "soil-perfect-2",
+  "name": "이서윤",
+  "headline": "화학생명공학 석사 — 공정 엔지니어 지망",
+  "address": "울산 남구",
+  "desired_positions": [
+    "공정"
+  ],
+  "education": [
+    {
+      "level": "bachelor",
+      "school": "울산과학대학교",
+      "status": "graduated",
+      "major": "화학생명공학과",
+      "graduation": "2025-02"
+    },
+    {
+      "level": "master",
+      "school": "울산과학대학교 대학원",
+      "status": "expected",
+      "major": "화학생명공학과",
+      "graduation": "2027-02"
+    }
+  ],
+  "experiences": [
+    {
+      "company": "울산과학대학교 공정시스템연구실",
+      "role": "석사 연구원",
+      "start": "2025-03",
+      "end": null,
+      "description": "정유 증류 공정 시뮬레이션(Aspen Plus), 국제학회(AIChE) 영어 구두 발표"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "화공기사",
+      "acquired": "2025-11"
+    }
+  ],
+  "languages": [
+    {
+      "language": "영어",
+      "test": "OPIc",
+      "score": "IH",
+      "acquired": "2026-03"
+    }
+  ],
+  "military": "해당 없음",
+  "declarations": [
+    "2027년 1월부터 근무 가능 (2026년 12월 학위 심사 완료 예정)",
+    "해외 출국에 제한 사항 없음"
+  ],
+  "skills": [
+    "Aspen Plus",
+    "Python"
+  ],
+  "self_intro": "연구실에서 해외 연구진과 영어로 주간 회의를 진행해 왔습니다.",
+  "source": {
+    "method": "mock"
+  },
+  "meta": {
+    "target_posting": "55189170",
+    "label": "perfect",
+    "intent": "다른 표현으로 충족 — 화학생명공학(화공), OPIc(공인영어), 석사 졸업 예정, 화공기사, 병역 해당 없음",
+    "expected": [
+      {
+        "requirement": "화공 전공",
+        "status": "met"
+      },
+      {
+        "requirement": "병역",
+        "status": "not_applicable"
+      },
+      {
+        "requirement": "자격증",
+        "status": "met"
+      },
+      {
+        "requirement": "공인영어성적",
+        "status": "met"
+      },
+      {
+        "requirement": "대학(원)",
+        "status": "met"
+      }
+    ]
+  }
+}

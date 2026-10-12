@@ -1,0 +1,80 @@
+{
+  "id": "orion-mismatch-1",
+  "name": "윤성민",
+  "headline": "백엔드 개발자 6년",
+  "address": "서울 성동구",
+  "desired_positions": [],
+  "education": [
+    {
+      "level": "bachelor",
+      "school": "서울OO대학교",
+      "status": "graduated",
+      "major": "컴퓨터공학과",
+      "graduation": "2016-02"
+    },
+    {
+      "level": "master",
+      "school": "서울OO대학교 대학원",
+      "status": "graduated",
+      "major": "컴퓨터공학과",
+      "graduation": "2018-02"
+    }
+  ],
+  "experiences": [
+    {
+      "company": "OO테크",
+      "role": "백엔드 개발자",
+      "start": "2018-03",
+      "end": null,
+      "description": "결제 API 개발, 서버 운영"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "정보처리기사",
+      "acquired": "2015-11"
+    }
+  ],
+  "languages": [
+    {
+      "language": "영어",
+      "test": "TOEIC",
+      "score": "900",
+      "acquired": "2025-04"
+    }
+  ],
+  "military": "군필 (공군 병장 만기전역, 2013-03~2015-02)",
+  "declarations": [
+    "야간근무 불가 (재택·주간 근무 희망)"
+  ],
+  "skills": [
+    "Python",
+    "Kubernetes",
+    "포장",
+    "배합",
+    "청주"
+  ],
+  "self_intro": "안정적인 서비스를 만드는 개발자입니다.",
+  "source": {
+    "method": "mock"
+  },
+  "meta": {
+    "target_posting": "55162188",
+    "label": "mismatch",
+    "intent": "다른 직군(IT 개발) — 학력은 충족(석사 ≥ 고졸)하지만 야간근무 불가, 기술 칸에 '포장·배합·청주'를 나열만 함",
+    "expected": [
+      {
+        "requirement": "야간근무",
+        "status": "unmet"
+      },
+      {
+        "requirement": "인근거주",
+        "status": "unmet"
+      },
+      {
+        "requirement": "고등학교",
+        "status": "met"
+      }
+    ]
+  }
+}

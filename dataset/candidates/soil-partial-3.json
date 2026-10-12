@@ -1,0 +1,78 @@
+{
+  "id": "soil-partial-3",
+  "name": "한지훈",
+  "headline": "산업공학 전공 — 설비·안전 분야 지망",
+  "address": "울산 북구",
+  "desired_positions": [
+    "설비기술",
+    "안전환경"
+  ],
+  "education": [
+    {
+      "level": "bachelor",
+      "school": "울산한마음대학교",
+      "status": "graduated",
+      "major": "산업공학과",
+      "graduation": "2026-02"
+    }
+  ],
+  "experiences": [
+    {
+      "company": "OO석유화학",
+      "role": "안전관리 인턴",
+      "start": "2025-07",
+      "end": "2025-12",
+      "description": "작업허가서 점검, 위험성 평가 보조"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "산업안전기사",
+      "acquired": "2025-11"
+    }
+  ],
+  "languages": [
+    {
+      "language": "영어",
+      "test": "TOEIC",
+      "score": "800",
+      "acquired": "2026-01"
+    }
+  ],
+  "military": "군필 (해군 병장 만기전역, 2019-01~2020-08)",
+  "declarations": [
+    "2027년 1월 입사 가능",
+    "해외여행에 결격사유 없음"
+  ],
+  "skills": [
+    "위험성 평가",
+    "Minitab"
+  ],
+  "self_intro": "공정 안전에 관심이 많아 석유화학 공장에서 안전관리 인턴을 했습니다.",
+  "source": {
+    "method": "mock"
+  },
+  "meta": {
+    "target_posting": "55189170",
+    "label": "partial",
+    "intent": "인접 전공(산업공학) — 희망 분야 두 곳 모두 전공 미충족, 산업안전기사로 우대 충족. 희망 분야 2개 중 높은 쪽 선택",
+    "expected": [
+      {
+        "requirement": "기계/재료",
+        "status": "unmet"
+      },
+      {
+        "requirement": "화공/안전",
+        "status": "unmet"
+      },
+      {
+        "requirement": "자격증",
+        "status": "met"
+      },
+      {
+        "requirement": "공인영어성적",
+        "status": "met"
+      }
+    ]
+  }
+}

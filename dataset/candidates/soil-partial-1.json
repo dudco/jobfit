@@ -1,0 +1,67 @@
+{
+  "id": "soil-partial-1",
+  "name": "박준호",
+  "headline": "기계공학 전공 신입 — 설비 정비·설계 지망",
+  "address": "경남 창원시",
+  "desired_positions": [
+    "설비기술"
+  ],
+  "education": [
+    {
+      "level": "bachelor",
+      "school": "창원국립대학교",
+      "status": "graduated",
+      "major": "기계공학과",
+      "graduation": "2026-02"
+    }
+  ],
+  "experiences": [
+    {
+      "company": "OO중공업",
+      "role": "설비보전팀 현장실습",
+      "start": "2025-07",
+      "end": "2025-08",
+      "description": "회전기기 예방정비 보조"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "일반기계기사",
+      "acquired": "2025-08"
+    }
+  ],
+  "languages": [],
+  "military": "군필 (공군 병장 만기전역, 2019-03~2020-12)",
+  "declarations": [
+    "2027년 1월 입사 가능",
+    "해외여행에 결격사유 없음",
+    "공인영어성적 미보유 (2026년 11월 TOEIC 응시 예정)"
+  ],
+  "skills": [
+    "AutoCAD",
+    "SolidWorks"
+  ],
+  "self_intro": "현장실습에서 펌프·압축기 정비 절차를 익혔습니다.",
+  "source": {
+    "method": "mock"
+  },
+  "meta": {
+    "target_posting": "55189170",
+    "label": "partial",
+    "intent": "전공·자격증은 충족, 공인영어성적이 없어 필수 1개 미충족",
+    "expected": [
+      {
+        "requirement": "공인영어성적",
+        "status": "unmet"
+      },
+      {
+        "requirement": "기계/재료",
+        "status": "met"
+      },
+      {
+        "requirement": "자격증",
+        "status": "met"
+      }
+    ]
+  }
+}

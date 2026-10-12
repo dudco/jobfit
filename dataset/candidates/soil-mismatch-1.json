@@ -1,0 +1,55 @@
+{
+  "id": "soil-mismatch-1",
+  "name": "오성철",
+  "headline": "화학공장 생산직 10년 경력",
+  "address": "울산 남구",
+  "desired_positions": [
+    "공정"
+  ],
+  "education": [
+    {
+      "level": "high_school",
+      "school": "울산OO고등학교",
+      "status": "graduated",
+      "graduation": "2012-02"
+    }
+  ],
+  "experiences": [
+    {
+      "company": "OO화학 울산공장",
+      "role": "생산직 오퍼레이터",
+      "start": "2014-03",
+      "end": null,
+      "description": "반응기 운전, 4조 3교대 근무"
+    }
+  ],
+  "certifications": [],
+  "languages": [],
+  "military": "군필 (육군 병장 만기전역, 2012-03~2013-12)",
+  "declarations": [],
+  "skills": [
+    "화공",
+    "TOEIC",
+    "영어 회화",
+    "공정관리"
+  ],
+  "self_intro": "현장에서 10년간 설비를 운전하며 공정을 몸으로 익혔습니다.",
+  "source": {
+    "method": "mock"
+  },
+  "meta": {
+    "target_posting": "55189170",
+    "label": "mismatch",
+    "intent": "고졸 생산직 경력자 — 학력·공인영어·전공 미충족, 기술 칸에 공고 키워드를 나열만 함 (키워드 스터핑)",
+    "expected": [
+      {
+        "requirement": "대학(원)",
+        "status": "unmet"
+      },
+      {
+        "requirement": "화공 전공",
+        "status": "unmet"
+      }
+    ]
+  }
+}

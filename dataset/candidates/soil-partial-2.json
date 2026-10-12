@@ -1,0 +1,79 @@
+{
+  "id": "soil-partial-2",
+  "name": "정민수",
+  "headline": "국제통상학 전공 — 해외영업 지망",
+  "address": "서울 마포구",
+  "desired_positions": [
+    "영업/마케팅"
+  ],
+  "education": [
+    {
+      "level": "bachelor",
+      "school": "서울한빛대학교",
+      "status": "expected",
+      "major": "국제통상학과",
+      "graduation": "2027-08"
+    }
+  ],
+  "experiences": [
+    {
+      "company": "OO무역",
+      "role": "해외영업 인턴",
+      "start": "2026-01",
+      "end": "2026-06",
+      "description": "해외 바이어 응대, 수출 서류 작성"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "무역영어 1급",
+      "acquired": "2025-09"
+    }
+  ],
+  "languages": [
+    {
+      "language": "영어",
+      "test": "TOEIC",
+      "score": "880",
+      "acquired": "2025-12"
+    },
+    {
+      "language": "영어",
+      "test": "OPIc",
+      "score": "AL",
+      "acquired": "2026-02"
+    }
+  ],
+  "military": "군필 (육군 병장 만기전역, 2020-02~2021-08)",
+  "declarations": [
+    "2027년 1월 입사 가능",
+    "해외여행에 결격사유 없음"
+  ],
+  "skills": [
+    "엑셀",
+    "CRM"
+  ],
+  "self_intro": "인턴 기간 동안 영어로 바이어 미팅을 진행했습니다.",
+  "source": {
+    "method": "mock"
+  },
+  "meta": {
+    "target_posting": "55189170",
+    "label": "partial",
+    "intent": "모두 갖췄지만 졸업 예정이 2027년 8월 — 요건 문구의 기한 단서(2027년 2월 이내) 판정",
+    "expected": [
+      {
+        "requirement": "대학(원)",
+        "status": "unmet"
+      },
+      {
+        "requirement": "상경계열",
+        "status": "met"
+      },
+      {
+        "requirement": "영어 회화",
+        "status": "met"
+      }
+    ]
+  }
+}

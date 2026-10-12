@@ -1,0 +1,54 @@
+{
+  "id": "orion-partial-2",
+  "name": "정미경",
+  "headline": "식품 포장 생산직 4년",
+  "address": "충북 청주시 서원구",
+  "desired_positions": [],
+  "education": [
+    {
+      "level": "high_school",
+      "school": "청주OO여자고등학교",
+      "status": "graduated",
+      "graduation": "2010-02"
+    }
+  ],
+  "experiences": [
+    {
+      "company": "OO식품",
+      "role": "포장 생산직",
+      "start": "2019-01",
+      "end": "2023-06",
+      "description": "빵 포장 라인, 계량·검수"
+    }
+  ],
+  "certifications": [],
+  "languages": [],
+  "military": "해당 없음",
+  "declarations": [
+    "야간근무 불가 (육아로 주간 근무만 가능)"
+  ],
+  "skills": [],
+  "self_intro": "식품 포장 경험이 많고 꼼꼼합니다.",
+  "source": {
+    "method": "mock"
+  },
+  "meta": {
+    "target_posting": "55162188",
+    "label": "partial",
+    "intent": "경험·거주는 완벽하지만 야간근무 불가 — 필수 미충족 게이트",
+    "expected": [
+      {
+        "requirement": "야간근무",
+        "status": "unmet"
+      },
+      {
+        "requirement": "인근거주",
+        "status": "met"
+      },
+      {
+        "requirement": "근무경험",
+        "status": "met"
+      }
+    ]
+  }
+}

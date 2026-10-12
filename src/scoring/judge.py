@@ -55,8 +55,8 @@ def context_lines(criteria: PostingCriteria, positions: Optional[list[str]]) -> 
     """판정에 필요한 공고 맥락 — 근무지('인근거주' 판단)와 평가 모집분야('~지원자의 경우' 판단).
     모두 공고 이미지에서 추출한 값이다 (ADR-0008)."""
     lines = []
-    places = list(dict.fromkeys([*criteria.conditions.locations,
-                                 *(p.location for p in criteria.positions if p.location)]))
+    raw = [*criteria.conditions.locations, *(p.location for p in criteria.positions if p.location)]
+    places = list(dict.fromkeys(part.strip() for item in raw for part in item.split(" / ") if part.strip()))
     if places:
         lines.append("근무지: " + " / ".join(places))
     shown = [p for p in criteria.positions if not positions or p.name in positions]

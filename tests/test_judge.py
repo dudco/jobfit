@@ -28,9 +28,10 @@ def test_prompt_gives_workplace_and_evaluated_positions_as_context():
     reqs = [make_requirement("r1", "인근거주자 우대", priority="preferred")]
     crit = make_criteria(reqs, positions=["공정", "재무"])
     crit.positions[0].location, crit.positions[0].duties = "울산 (공장)", "생산기획"
+    crit.positions[1].location = "충북 청주시 흥덕구 / 울산 (공장)"     # 여러 근무지를 이어 쓴 값
     crit.conditions.locations = ["충북 청주시 흥덕구"]
     prompt = build_prompt(crit, reqs, CAND, positions=["공정"])
-    assert "근무지: 충북 청주시 흥덕구 / 울산 (공장)" in prompt
+    assert "근무지: 충북 청주시 흥덕구 / 울산 (공장)\n" in prompt                # 중복 없이
     assert "# 평가 모집분야" in prompt and "- 공정: 생산기획 (울산 (공장))" in prompt
     assert "- 재무" not in prompt
     whole = build_prompt(crit, reqs, CAND)                       # 분야를 정하지 않으면 공고의 모든 분야

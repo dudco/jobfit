@@ -1,3 +1,4 @@
+import pytest
 from typer.testing import CliRunner
 
 import cli
@@ -229,3 +230,30 @@ def test_ranking_shows_posting_notes_and_tied_positions(monkeypatch, tmp_path):
     monkeypatch.setattr(scoring_service, "match", lambda *a, **k: res)
     out = CliRunner(env={"COLUMNS": "200"}).invoke(cli.app, ["match", "55", "--candidates", str(d)]).output
     assert "ℹ 공통 자격만으로 점수를 매김" in out and "전 분야 동일" in out
+
+
+@pytest.mark.parametrize("args, key", [
+    (["extract", "55"], "OPENAI_API_KEY"), (["match", "55"], "OPENAI_API_KEY"),
+    (["run", "55"], "OPENAI_API_KEY"), (["experiment-jev", "55"], "TYPESAFE_API_KEY"),
+])
+def test_commands_needing_api_fail_fast_without_key(monkeypatch, tmp_path, args, key):
+    import settings as settings_module
+
+    monkeypatch.setattr(settings_module, "load_dotenv", lambda *a, **k: None)   # 레포의 .env를 읽지 않음
+    monkeypatch.setenv("JOBFIT_DATA_DIR", str(tmp_path))
+    monkeypatch.delenv(key, raising=False)
+    result = CliRunner().invoke(cli.app, args)
+    assert result.exit_code == 1
+    assert key in result.output and "Traceback" not in result.output
+
+
+def test_cost_command_prints_totals(monkeypatch, tmp_path):
+    monkeypatch.setenv("JOBFIT_DATA_DIR", str(tmp_path))
+    llm_dir = tmp_path / "cache" / "llm"
+    llm_dir.mkdir(parents=True)
+    (llm_dir / "judge-55-a-1.json").write_text('{"tag": "judge-55-a", "model": "gpt-4.1", "response": {}, '
+                                               '"usage": {"input_tokens": 1000, "cached_input_tokens": 0, '
+                                               '"output_tokens": 100}}')
+    result = CliRunner(env={"COLUMNS": "200"}).invoke(cli.app, ["cost"])
+    assert result.exit_code == 0, result.output
+    assert "판정" in result.output and "합계" in result.output and "$0.0028" in result.output

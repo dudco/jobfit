@@ -28,6 +28,7 @@
 | [0022](0022-position-fit-derived-requirements.md) | 직무 요건이 없는 공고는 모집분야 이름에서 직무 적합도 우대 요건을 도출한다 | 채택 | 05 |
 | [0023](0023-excluded-postings-separate-page.md) | 처리할 수 없는 공고는 기본 화면에서 빼고 `/excluded`에서만 보인다 | 채택 | 05 |
 | [0024](0024-judge-model-cascade-experiment.md) | 판단 전용 모델(JEV)로 요건 판정을 대신하거나 단계식으로 쓸지 실험으로 정한다 | 기본 판정 교체 안 함 · 1차 선별 용도 권장 | 06 |
+| [0025](0025-api-key-fail-fast-and-cost-report.md) | API 키가 없으면 작업 전에 멈추고, 사용량은 캐시 파일에 함께 기록한다 | 채택 | — |
 
 ## 템플릿
 

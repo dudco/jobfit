@@ -36,7 +36,7 @@ jobfit --help
 
 | 변수 | 기본값 | 설명 |
 |---|---|---|
-| `OPENAI_API_KEY` | — | 전처리(`extract`)·매칭(`match`)·`models`에 필요. 캐시에 있는 호출은 키 없이 동작 |
+| `OPENAI_API_KEY` | — | `extract`·`match`·`run`·`models`와 API의 매칭·실행에 필요. 비어 있으면 작업 전에 멈춘다 (캐시에 있는 호출도 마찬가지) |
 | `JOBFIT_DATA_DIR` | `<레포>/data` | 수집·처리 산출물 저장 위치 |
 | `JOBFIT_REQUEST_INTERVAL` | `1.5` | 사람인 요청 사이 대기 시간(초) |
 | `JOBFIT_VISION_MODEL` | `gpt-4.1` | 이미지 전사 모델 |
@@ -171,11 +171,14 @@ jobfit result 55189170                             # 랭킹
 jobfit result 55189170 --candidate soil-partial-1  # 요건별 판정 · 이력서 근거 · 기여 점수 · 요약
 ```
 
-### 기타 — `jobfit models`
+### 기타 — `jobfit models`, `jobfit cost`
 
 ```bash
 jobfit models     # API 키로 사용 가능한 모델 목록
+jobfit cost       # 지금까지 쓴 API 토큰·비용 (모델 × 단계별, 키 불필요)
 ```
+
+`cost`는 응답 캐시 파일(파일 하나 = 실제 호출 하나)을 센다. 사용량이 기록된 호출은 **실측**, 기록 기능 이전 호출은 남은 프롬프트 재료로 다시 센 **추정**이다. 남아 있는 캐시 기준이라 하한이다 ([ADR-0025](docs/adr/0025-api-key-fail-fast-and-cost-report.md)).
 
 ## 산출물
 
@@ -235,12 +238,14 @@ pytest
 
 ```
 src/
-  cli.py              jobfit 명령 (run, serve, crawl, postings, extract, criteria, evaluate, match, result, models)
+  cli.py              jobfit 명령 (run, serve, crawl, postings, extract, criteria, evaluate, match, result, models, cost, experiment-jev)
   api.py              HTTP API (FastAPI) — 서비스 호출만
   pipeline.py         수집 → 추출 → 매칭 한 번에 실행
   web/index.html      UI (정적 HTML 한 장, API만 호출)
   settings.py         환경변수 설정
-  llm.py              LLM 프로토콜, OpenAI 구현, 응답 캐시
+  llm.py              LLM 프로토콜, OpenAI 구현, 응답 캐시 (사용량 기록)
+  keys.py             API 키 확인 — 없으면 작업 전에 멈춤
+  usage.py            사용량·비용 집계 (jobfit cost)
   crawler/
     saramin.py        사람인 HTML 규칙 (rec_idx, 본문 이미지 URL, 본문 텍스트, 제목)
     images.py         내려받은 이미지 검사

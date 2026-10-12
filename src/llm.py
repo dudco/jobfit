@@ -38,6 +38,17 @@ class OpenAILLM:
 
             client = OpenAI()  # OPENAI_API_KEY 환경변수 사용
         self.client = client
+        self.last_usage: Optional[dict] = None     # 마지막 호출의 토큰 사용량 (CachedLLM이 캐시에 기록)
+
+    def _record(self, resp) -> None:
+        u = getattr(resp, "usage", None)
+        if u is None:
+            self.last_usage = None
+            return
+        details = getattr(u, "prompt_tokens_details", None)
+        self.last_usage = {"input_tokens": u.prompt_tokens or 0,
+                           "cached_input_tokens": (getattr(details, "cached_tokens", 0) or 0) if details else 0,
+                           "output_tokens": u.completion_tokens or 0}
 
     def vision_text(self, *, model: str, system: str, image: Path,
                     user_text: Optional[str] = None, tag: str = "") -> str:
@@ -49,6 +60,7 @@ class OpenAILLM:
             model=model,
             messages=[{"role": "system", "content": system}, {"role": "user", "content": content}],
         )
+        self._record(resp)
         return resp.choices[0].message.content or ""
 
     def structured(self, *, model: str, system: str, user: str, schema: type[T], tag: str = "") -> T:
@@ -57,6 +69,7 @@ class OpenAILLM:
             messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
             response_format=schema,
         )
+        self._record(resp)
         msg = resp.choices[0].message
         if msg.parsed is None:
             raise RuntimeError(f"구조화 응답 실패: {msg.refusal}")
@@ -106,7 +119,7 @@ class CachedLLM:
         if found:
             return value
         out = self.inner.vision_text(model=model, system=system, image=image, user_text=user_text, tag=tag)
-        self._save(tag, key, model, out)
+        self._save(tag, key, model, out, getattr(self.inner, "last_usage", None))
         return out
 
     def structured(self, *, model: str, system: str, user: str, schema: type[T], tag: str = "") -> T:
@@ -116,7 +129,7 @@ class CachedLLM:
         if found:
             return schema.model_validate(value)
         out = self.inner.structured(model=model, system=system, user=user, schema=schema, tag=tag)
-        self._save(tag, key, model, out.model_dump(mode="json"))
+        self._save(tag, key, model, out.model_dump(mode="json"), getattr(self.inner, "last_usage", None))
         return out
 
     def _path(self, tag: str, key: str) -> Path:
@@ -129,12 +142,13 @@ class CachedLLM:
             return False, None
         return True, json.loads(path.read_text(encoding="utf-8"))["response"]
 
-    def _save(self, tag: str, key: str, model: str, response: Any) -> None:
+    def _save(self, tag: str, key: str, model: str, response: Any, usage: Optional[dict] = None) -> None:
+        """캐시 파일 하나 = 실제 호출 하나. 사용량을 함께 남겨 `jobfit cost`가 비용을 계산한다."""
         self.cache_dir.mkdir(parents=True, exist_ok=True)
-        self._path(tag, key).write_text(
-            json.dumps({"tag": tag, "model": model, "response": response}, ensure_ascii=False, indent=2),
-            encoding="utf-8",
-        )
+        record = {"tag": tag, "model": model, "response": response}
+        if usage:
+            record["usage"] = usage
+        self._path(tag, key).write_text(json.dumps(record, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def cached_openai(cache_dir: Path) -> CachedLLM:

@@ -40,19 +40,25 @@ class Settings:
         return self.data_dir / "cache" / "jev"
 
 
+def _from_root(value: str) -> Path:
+    """상대 경로는 실행 위치가 아니라 레포 루트 기준 — 어디서 실행해도 같은 data/를 본다."""
+    path = Path(value)
+    return path if path.is_absolute() else ROOT / path
+
+
 def load_settings(*, dotenv_path: Optional[Path] = ROOT / ".env") -> Settings:
     """환경변수에서 설정을 읽는다. dotenv_path=None이면 .env를 읽지 않는다 (테스트용)."""
     if dotenv_path is not None:
         load_dotenv(dotenv_path)
     env = os.environ.get
     return Settings(
-        data_dir=Path(env("JOBFIT_DATA_DIR", str(ROOT / "data"))),
+        data_dir=_from_root(env("JOBFIT_DATA_DIR", str(ROOT / "data"))),
         request_interval=float(env("JOBFIT_REQUEST_INTERVAL", "1.5")),
         vision_model=env("JOBFIT_VISION_MODEL", DEFAULT_VISION_MODEL),
         text_model=env("JOBFIT_TEXT_MODEL", DEFAULT_TEXT_MODEL),
         slice_height=int(env("JOBFIT_SLICE_HEIGHT", "1200")),
         max_width=int(env("JOBFIT_MAX_WIDTH", "1000")),
         judge_model=env("JOBFIT_JUDGE_MODEL", DEFAULT_JUDGE_MODEL),
-        candidates_dir=Path(env("JOBFIT_CANDIDATES_DIR", str(ROOT / "dataset" / "candidates"))),
+        candidates_dir=_from_root(env("JOBFIT_CANDIDATES_DIR", str(ROOT / "dataset" / "candidates"))),
         jev_model=env("JOBFIT_JEV_MODEL", "jev-latest"),
     )

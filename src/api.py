@@ -18,6 +18,7 @@ from flags import FLAGS
 from crawler.saramin import parse_rec_idx
 from crawler.service import SITE
 from crawler.snapshot import list_snapshots
+from keys import require_api_key
 from llm import LLM, cached_openai
 from preprocessing.criteria import PostingCriteria, criteria_dir, list_criteria, load_criteria
 from scoring import service as scoring_service
@@ -78,7 +79,8 @@ def create_app(settings: Optional[Settings] = None, llm: Optional[LLM] = None) -
     holder: list[LLM] = [llm] if llm is not None else []
 
     def get_llm() -> LLM:
-        if not holder:                                   # 캐시 적중이면 API 키 없이도 동작
+        if not holder:
+            require_api_key("OPENAI_API_KEY")           # 없으면 400 — 작업 전에 알린다
             holder.append(cached_openai(settings.llm_cache_dir))
         return holder[0]
 

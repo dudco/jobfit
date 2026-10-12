@@ -14,6 +14,7 @@ from rich.table import Table
 import pipeline
 from flags import describe
 from crawler.saramin import parse_rec_idx
+from keys import require_api_key
 from llm import CachedLLM, OpenAILLM, cached_openai
 from preprocessing import service as preprocessing_service
 from preprocessing.criteria import criteria_dir, load_criteria
@@ -81,6 +82,7 @@ def postings():
 
 def make_llm(settings) -> CachedLLM:
     """응답 캐시(ADR-0014)를 거치는 OpenAI 클라이언트. 캐시 적중이면 API 키가 없어도 된다."""
+    require_api_key("OPENAI_API_KEY")                  # 키가 없으면 작업 전에 멈춘다 (캐시 재생도 키 필요)
     return cached_openai(settings.llm_cache_dir)
 
 
@@ -144,6 +146,7 @@ def experiment_jev(
     from scoring.jev import CachedJev, real_client
 
     settings = load_settings()
+    require_api_key("TYPESAFE_API_KEY")
     jev = CachedJev(real_client, settings.jev_cache_dir, model=settings.jev_model)
     ts = [float(x) for x in thresholds.split(",")]
     for ref in refs:
@@ -184,9 +187,11 @@ def serve(
 
 
 @app.command()
+@_friendly
 def models():
     """현재 API 키로 사용 가능한 모델 목록 (OPENAI_API_KEY 필요)."""
     load_settings()  # .env 로드
+    require_api_key("OPENAI_API_KEY")
     for name in OpenAILLM().list_models():
         console.print(name)
 
@@ -277,6 +282,29 @@ def run_cmd(
     for ref in refs:
         result = pipeline.run(ref, settings, llm=llm, refresh=refresh, log=_log)
         _print_ranking(result, people)
+
+
+@app.command()
+def cost():
+    """지금까지 쓴 API 토큰과 비용 — 캐시 파일 기준 (캐시 적중은 무료라 세지 않음)."""
+    from usage import PRICES_AS_OF, summarize
+
+    settings = load_settings()
+    rows = summarize(settings.data_dir)
+    if not rows:
+        console.print("API 호출 기록이 없습니다 (data/cache 비어 있음)")
+        return
+    table = Table("구분", "모델", "단계", "호출", "입력", "캐시 입력", "출력", "비용")
+    for r in rows:
+        table.add_row(r.basis, r.model, r.stage, f"{r.calls:,}", f"{r.input_tokens:,}",
+                      f"{r.cached_input_tokens:,}", f"{r.output_tokens:,}", f"${r.cost:.4f}")
+    table.add_section()
+    table.add_row("합계", "", "", f"{sum(r.calls for r in rows):,}", f"{sum(r.input_tokens for r in rows):,}",
+                  f"{sum(r.cached_input_tokens for r in rows):,}", f"{sum(r.output_tokens for r in rows):,}",
+                  f"${sum(r.cost for r in rows):.4f}")
+    console.print(table)
+    console.print(f"[dim]실측 = 응답에 기록된 토큰, 추정 = 사용량 기록 전 호출을 프롬프트·이미지 크기로 다시 계산. "
+                  f"가격 기준 {PRICES_AS_OF} (src/usage.py PRICES). 같은 입력의 재실행은 캐시 적중이라 비용 없음.[/dim]")
 
 
 @app.command()

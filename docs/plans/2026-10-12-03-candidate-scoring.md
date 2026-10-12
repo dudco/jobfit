@@ -1522,7 +1522,7 @@ JOBFIT_JUDGE_MODEL=gpt-4.1-mini jobfit match 55189170 55162188 --refresh
 - [x] **Step 1: 판정 프롬프트에 공고 맥락 (TDD)** — `tests/test_judge.py::test_prompt_gives_workplace_and_evaluated_positions_as_context` → FAIL 확인 → `judge.context_lines()`(근무지, 평가 모집분야 이름·직무·근무지), `build_prompt(..., positions)`, 서비스가 평가 분야를 넘김 → PASS
 - [x] **Step 2: 판정 규칙 명확화** — `JUDGE_SYSTEM`: partial은 경력·경험·기술의 정도 차이에만, 목록·기한 요건은 unmet, 학력란이 있는데 요구 전공이 없으면 unmet, 거주 요건은 근무지 기준, 대상 조건은 평가 모집분야로. 공고 고유 단어 없이 일반 규칙으로
 - [x] **Step 3: 의도가 모호한 목업 2건 수정** — soil-perfect-2 병역 "비대상 (병역 의무 없음)", orion-partial-1 경험을 마트 아르바이트로
-- [ ] **Step 4: 재실행 [수동 — API]**
+- [x] **Step 4: 재실행 [수동 — API]** (2차 결과·진단 8~11은 스펙 03 11장)
 
 ```bash
 jobfit match 55189170 55162188 --refresh
@@ -1530,7 +1530,12 @@ JOBFIT_JUDGE_MODEL=gpt-4.1-mini jobfit match 55189170 55162188 --refresh
 ```
 프롬프트가 바뀌어 캐시가 맞지 않으므로 판정을 다시 호출한다 (모델당 24회).
 
-- [ ] **Step 5: 판정 모델 결정과 기록** → Task 12
+- [x] **Step 5: 2차 진단에 따른 보정 (TDD)**
+  - `test_judgment_schema_puts_evidence_and_reason_before_status` → FAIL → `LLMJudgment` 필드 순서를 quotes → reason → status로 → PASS
+  - `test_quote_label_punctuation_is_ignored` → FAIL → `scoring.verify._found()`가 대괄호·콜론 무시 → PASS
+  - 프롬프트: 거주 규칙 "구·읍·면이 달라도 같은 시·군이면 met", "사유와 일치하는 상태를 고른다"
+- [ ] **Step 6: 3차 실행 [수동 — API]** — Step 4와 같은 명령 (스키마·프롬프트가 바뀌어 다시 호출)
+- [ ] **Step 7: 판정 모델 결정과 기록** → Task 12
 
 ---
 

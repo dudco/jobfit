@@ -33,7 +33,7 @@
 - Create: `pyproject.toml`, `.env.example`, `src/jobfit/__init__.py`, `src/jobfit/settings.py`, `tests/__init__.py`
 - Test: `tests/test_settings.py`
 
-- [ ] **Step 1: 프로젝트 파일 작성**
+- [x] **Step 1: 프로젝트 파일 작성**
 
 `pyproject.toml`:
 
@@ -89,7 +89,7 @@ __version__ = "0.1.0"
 
 `tests/__init__.py`: 빈 파일
 
-- [ ] **Step 2: 실패하는 테스트 작성**
+- [x] **Step 2: 실패하는 테스트 작성**
 
 `tests/test_settings.py`:
 
@@ -116,7 +116,7 @@ def test_defaults(monkeypatch):
     assert "Mozilla" in s.user_agent
 ```
 
-- [ ] **Step 3: 설치 후 실패 확인**
+- [x] **Step 3: 설치 후 실패 확인**
 
 ```bash
 uv venv && source .venv/bin/activate
@@ -125,7 +125,7 @@ pytest tests/test_settings.py -v
 ```
 Expected: FAIL — `ModuleNotFoundError: No module named 'jobfit.settings'`
 
-- [ ] **Step 4: 구현**
+- [x] **Step 4: 구현**
 
 `src/jobfit/settings.py`:
 
@@ -161,12 +161,12 @@ def load_settings() -> Settings:
     )
 ```
 
-- [ ] **Step 5: 통과 확인**
+- [x] **Step 5: 통과 확인**
 
 Run: `pytest tests/test_settings.py -v`
 Expected: 2 passed
 
-- [ ] **Step 6: 커밋**
+- [x] **Step 6: 커밋**
 
 ```bash
 git add pyproject.toml .env.example src tests
@@ -181,7 +181,7 @@ git commit -m "chore: 프로젝트 셋업과 환경변수 기반 설정"
 - Create: `src/jobfit/crawler/__init__.py` (빈 파일), `src/jobfit/crawler/saramin.py`
 - Test: `tests/test_saramin.py`
 
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [x] **Step 1: 실패하는 테스트 작성**
 
 `tests/test_saramin.py`:
 
@@ -207,12 +207,12 @@ def test_parse_rec_idx_rejects_refs_without_id(ref):
         parse_rec_idx(ref)
 ```
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run: `pytest tests/test_saramin.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'jobfit.crawler'`
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/jobfit/crawler/saramin.py`:
 
@@ -248,12 +248,12 @@ def parse_rec_idx(ref: str) -> str:
     raise ValueError(f"rec_idx를 찾을 수 없습니다: {ref!r}")
 ```
 
-- [ ] **Step 4: 통과 확인**
+- [x] **Step 4: 통과 확인**
 
 Run: `pytest tests/test_saramin.py -v`
 Expected: 7 passed
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add src/jobfit/crawler tests/test_saramin.py
@@ -268,7 +268,7 @@ git commit -m "feat(crawler): 사람인 URL에서 rec_idx 파싱"
 - Modify: `src/jobfit/crawler/saramin.py`
 - Test: `tests/test_saramin.py`
 
-- [ ] **Step 1: 실패하는 테스트 추가**
+- [x] **Step 1: 실패하는 테스트 추가**
 
 ```python
 from jobfit.crawler.saramin import extract_image_urls
@@ -298,12 +298,12 @@ def test_falls_back_to_whole_document_without_content_container():
     assert extract_image_urls('<img src="/a/poster.jpg">') == ["https://www.saramin.co.kr/a/poster.jpg"]
 ```
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run: `pytest tests/test_saramin.py -v`
 Expected: FAIL — `ImportError: cannot import name 'extract_image_urls'`
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/jobfit/crawler/saramin.py`에 추가:
 
@@ -331,12 +331,12 @@ def extract_image_urls(html: str, base_url: str = BASE) -> list[str]:
     return urls
 ```
 
-- [ ] **Step 4: 통과 확인**
+- [x] **Step 4: 통과 확인**
 
 Run: `pytest tests/test_saramin.py -v`
 Expected: 9 passed
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add src/jobfit/crawler/saramin.py tests/test_saramin.py
@@ -351,7 +351,7 @@ git commit -m "feat(crawler): 상세 본문 이미지 URL 추출"
 - Modify: `src/jobfit/crawler/saramin.py`
 - Test: `tests/test_saramin.py`
 
-- [ ] **Step 1: 실패하는 테스트 추가**
+- [x] **Step 1: 실패하는 테스트 추가**
 
 ```python
 from jobfit.crawler.saramin import body_text_length, extract_title
@@ -370,12 +370,12 @@ def test_extract_title_prefers_og_title_then_title_tag():
     assert extract_title("<html></html>") is None
 ```
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run: `pytest tests/test_saramin.py -v`
 Expected: FAIL — `ImportError: cannot import name 'body_text_length'`
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/jobfit/crawler/saramin.py`에 추가:
 
@@ -399,12 +399,12 @@ def extract_title(view_html: str) -> Optional[str]:
     return None
 ```
 
-- [ ] **Step 4: 통과 확인**
+- [x] **Step 4: 통과 확인**
 
 Run: `pytest tests/test_saramin.py -v`
 Expected: 11 passed
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add src/jobfit/crawler/saramin.py tests/test_saramin.py
@@ -419,7 +419,7 @@ git commit -m "feat(crawler): 본문 텍스트 길이와 공고 제목 추출"
 - Create: `src/jobfit/crawler/images.py`
 - Test: `tests/test_images.py`
 
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [x] **Step 1: 실패하는 테스트 작성**
 
 `tests/test_images.py`:
 
@@ -453,12 +453,12 @@ def test_unknown_format_gets_generic_extension():
     assert extension(ImageInfo(format="TIFF", width=1, height=1)) == ".bin"
 ```
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run: `pytest tests/test_images.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'jobfit.crawler.images'`
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/jobfit/crawler/images.py`:
 
@@ -498,12 +498,12 @@ def extension(info: ImageInfo) -> str:
     return EXTENSIONS.get(info.format, ".bin")
 ```
 
-- [ ] **Step 4: 통과 확인**
+- [x] **Step 4: 통과 확인**
 
 Run: `pytest tests/test_images.py -v`
 Expected: 3 passed
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add src/jobfit/crawler/images.py tests/test_images.py
@@ -518,7 +518,7 @@ git commit -m "feat(crawler): 내려받은 이미지 검사와 메타데이터"
 - Create: `src/jobfit/crawler/snapshot.py`
 - Test: `tests/test_snapshot.py`
 
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [x] **Step 1: 실패하는 테스트 작성**
 
 `tests/test_snapshot.py`:
 
@@ -565,12 +565,12 @@ def test_list_snapshots_is_sorted_and_tolerates_missing_dir(tmp_path):
     assert list_snapshots(tmp_path / "empty") == []
 ```
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run: `pytest tests/test_snapshot.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'jobfit.crawler.snapshot'`
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/jobfit/crawler/snapshot.py`:
 
@@ -659,12 +659,12 @@ def list_snapshots(data_dir: Path) -> list[PostingSnapshot]:
     return [PostingSnapshot.model_validate_json(p.read_text(encoding="utf-8")) for p in paths]
 ```
 
-- [ ] **Step 4: 통과 확인**
+- [x] **Step 4: 통과 확인**
 
 Run: `pytest tests/test_snapshot.py -v`
 Expected: 3 passed
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add src/jobfit/crawler/snapshot.py tests/test_snapshot.py
@@ -679,7 +679,7 @@ git commit -m "feat(crawler): 공고 원본 스냅샷 매니페스트와 원자�
 - Create: `src/jobfit/crawler/service.py`
 - Test: `tests/test_service.py`
 
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [x] **Step 1: 실패하는 테스트 작성**
 
 `tests/test_service.py`:
 
@@ -792,12 +792,12 @@ def test_failed_image_download_leaves_no_manifest(tmp_path):
     assert load_snapshot(snapshot_dir(tmp_path, "saramin", "123")) is None
 ```
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run: `pytest tests/test_service.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'jobfit.crawler.service'`
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/jobfit/crawler/service.py`:
 
@@ -890,12 +890,12 @@ def _get(client: httpx.Client, settings: Settings, url: str,
     return resp
 ```
 
-- [ ] **Step 4: 통과 확인**
+- [x] **Step 4: 통과 확인**
 
 Run: `pytest -q`
 Expected: 전부 PASS
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add src/jobfit/crawler/service.py tests/test_service.py
@@ -910,7 +910,7 @@ git commit -m "feat(crawler): 공고 수집 서비스 (스냅샷 재사용, 실�
 - Create: `src/jobfit/cli.py`
 - Test: `tests/test_cli.py`
 
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [x] **Step 1: 실패하는 테스트 작성**
 
 `tests/test_cli.py`:
 
@@ -960,12 +960,12 @@ def test_postings_lists_saved_snapshots(monkeypatch, tmp_path):
     assert "111" in result.output and "회계팀" in result.output
 ```
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run: `pytest tests/test_cli.py -v`
 Expected: FAIL — `ImportError: cannot import name 'cli' from 'jobfit'`
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/jobfit/cli.py`:
 
@@ -1016,7 +1016,7 @@ def postings():
     console.print(table)
 ```
 
-- [ ] **Step 4: 통과 확인**
+- [x] **Step 4: 통과 확인**
 
 ```bash
 pytest -q
@@ -1024,7 +1024,7 @@ jobfit --help
 ```
 Expected: 전부 PASS, 도움말에 `crawl`, `postings`
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add src/jobfit/cli.py tests/test_cli.py

@@ -1,7 +1,7 @@
 # 01. 공고 이미지 수집 (crawler) 설계
 
 - 날짜: 2026-10-12
-- 상태: 검토 대기
+- 상태: 구현 중 (계획 Task 1–8 완료)
 - 단계: ① 수집 ([architecture](../architecture.md))
 - 구현 계획: [plans/2026-10-12-01-posting-crawler.md](../plans/2026-10-12-01-posting-crawler.md)
 - 관련 ADR: [0001](../adr/0001-three-stage-delivery.md), [0002](../adr/0002-thin-entrypoints.md), [0003](../adr/0003-python-stack.md), [0004](../adr/0004-crawl-detail-iframe-over-http.md), [0005](../adr/0005-origin-snapshot.md)
@@ -211,7 +211,7 @@ $ jobfit postings
 
 ## 8. 수용 기준
 
-- [ ] `pytest`가 네트워크 없이 통과
+- [x] `pytest`가 네트워크 없이 통과
 - [ ] 서로 다른 직군의 실제 이미지형 공고 **2건**이 `jobfit crawl`로 수집되고 `is_image_posting: true`
 - [ ] 두 번째 `jobfit crawl`은 네트워크 요청 없이 재사용
 - [ ] 가정 H1–H4의 검증 결과가 9장에 기록됨

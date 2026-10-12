@@ -214,3 +214,18 @@ def test_criteria_command_explains_flags_in_korean(monkeypatch, tmp_path):
     save_criteria(criteria_dir(tmp_path, "saramin", "55"), sample_criteria())
     result = CliRunner(env={"COLUMNS": "200"}).invoke(cli.app, ["criteria", "55"])
     assert "⚑ 근거 인용 없음" in result.output and "원문(공고 전사 또는 이력서)에서 찾지 못했다" in result.output
+
+
+def test_ranking_shows_posting_notes_and_tied_positions(monkeypatch, tmp_path):
+    from scoring import service as scoring_service
+
+    from .test_result import sample
+
+    monkeypatch.setenv("JOBFIT_DATA_DIR", str(tmp_path))
+    d = _write_candidate(tmp_path / "cands")
+    res = sample()
+    res.notes = ["공통 자격만으로 점수를 매김"]
+    res.candidates[0].tied_positions = True
+    monkeypatch.setattr(scoring_service, "match", lambda *a, **k: res)
+    out = CliRunner(env={"COLUMNS": "200"}).invoke(cli.app, ["match", "55", "--candidates", str(d)]).output
+    assert "ℹ 공통 자격만으로 점수를 매김" in out and "전 분야 동일" in out

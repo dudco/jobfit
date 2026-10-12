@@ -18,6 +18,7 @@ class Weights(BaseModel):
     gate: float = 0.8            # 필수 미충족 1개마다 곱함
     partial: float = 0.5
     unknown: float = 0.5
+    use_derived: bool = True     # 모집분야에서 도출한 적합도 요건 반영 (ADR-0022)
 
 
 class RequirementJudgment(BaseModel):
@@ -32,6 +33,7 @@ class RequirementJudgment(BaseModel):
     flags: list[str] = Field(default_factory=list)
     credit: Optional[float] = None
     contribution: float = 0.0
+    derived: bool = False        # 공고에 명시되지 않고 모집분야에서 도출한 요건
 
 
 class PositionScore(BaseModel):
@@ -57,6 +59,7 @@ class CandidateScore(BaseModel):
     positions: list[PositionScore]
     summary: list[str]
     excluded_sensitive: list[str]
+    tied_positions: bool = False  # 평가한 분야 점수가 모두 같음 — 대표 분야에 의미 없음
 
     @property
     def best(self) -> PositionScore:
@@ -70,8 +73,13 @@ class PostingRef(BaseModel):
     criteria_extracted_at: str
 
 
+SCORING_VERSION = 2   # 점수 계산 방식이 바뀌면 올린다 — 예전 결과는 재사용하지 않음 (판정은 캐시)
+
+
 class MatchResult(BaseModel):
     schema_version: int = 1
+    scoring_version: int = 1     # 이 필드가 없던 결과는 1
+    notes: list[str] = Field(default_factory=list)   # 공고 수준 안내 (정보 부족 등)
     posting: PostingRef
     matched_at: str
     model: str

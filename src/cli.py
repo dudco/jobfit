@@ -197,9 +197,12 @@ def _print_ranking(result, candidates) -> None:
                   title=f"{escape(result.posting.title)} ({posting_id})")
     for s in result.candidates:
         best = s.best
-        table.add_row(str(s.rank), str(s.score), escape(f"{s.candidate_id} {s.name}"), escape(s.position or "—"),
+        where = "전 분야 동일" if s.tied_positions else (s.position or "—")
+        table.add_row(str(s.rank), str(s.score), escape(f"{s.candidate_id} {s.name}"), escape(where),
                       f"{best.must_met}/{best.must_total}", str(len(best.unknown)), labels.get(s.candidate_id, ""))
     console.print(table)
+    for note in result.notes:
+        console.print(f"[yellow]ℹ {escape(note)}[/yellow]")
     if any(label != "(타 공고)" for label in labels.values()):
         ev = evaluate_ranking(result, candidates)
         console.print(f"의도 순서 {'✓' if ev.order_ok else '✗'} · 구간 이탈 {len(ev.out_of_range)} · "

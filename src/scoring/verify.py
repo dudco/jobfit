@@ -12,6 +12,7 @@ from preprocessing.criteria import Requirement
 from preprocessing.verify import clean_text, find_fragments, find_quote
 
 from .candidate import Candidate, render
+from .derive import DERIVED_FLAG
 from .judge import LLMJudgeOutput, LLMJudgment
 from .result import RequirementJudgment
 from .rules import education_status, experience_years, years_status
@@ -57,8 +58,10 @@ def judge_requirements(out: LLMJudgeOutput, requirements: list[Requirement], can
             have = experience_years(candidate, picked, today=today)
             status, rule = years_status(have, r.min_years), "experience_years"
             reason = f"관련 경력 {have:.1f}년 / 요구 {r.min_years:g}년"
+        derived = DERIVED_FLAG in r.flags
         result.append(RequirementJudgment(
             requirement_id=r.id, text=r.text, priority=r.priority, category=r.category,
-            status=status, quotes=quotes, reason=reason, rule=rule, flags=flags,
+            status=status, quotes=quotes, reason=reason, rule=rule,
+            flags=flags + ([DERIVED_FLAG] if derived else []), derived=derived,
         ))
     return result

@@ -30,6 +30,12 @@ FLAGS: dict[str, FlagInfo] = {
         "모집분야 불일치",
         "요건이 공고의 모집분야 목록에 없는 분야를 가리킨다. 해당 분야 지원자에게 적용되지 않을 수 있다",
         "warning"),
+    # 스코어링 (scoring/derive.py)
+    "derived_from_position": FlagInfo(
+        "모집분야에서 도출",
+        "공고에 명시된 요건이 아니다. 공고 이미지에 직무 요건이 없어 모집분야 이름에서 '직무 적합도' 우대 요건을 만들었다 "
+        "(가중치에서 끌 수 있음)",
+        "info"),
     # 지원자 판정 (scoring/verify.py)
     "no_evidence": FlagInfo(
         "근거 없는 판정",

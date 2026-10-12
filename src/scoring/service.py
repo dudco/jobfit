@@ -15,8 +15,9 @@ from preprocessing.criteria import PostingCriteria, Requirement, criteria_dir, l
 from settings import Settings
 
 from .candidate import Candidate, load_candidates
+from .derive import JOB_CATEGORIES, needs_position_fit, position_fit_requirements
 from .judge import judge
-from .result import CandidateScore, MatchResult, PostingRef, Weights, load_result, save_result
+from .result import SCORING_VERSION, CandidateScore, MatchResult, PostingRef, Weights, load_result, save_result
 from .score import aggregate, summarize
 from .verify import judge_requirements
 
@@ -30,29 +31,53 @@ def target_positions(criteria: PostingCriteria, candidate: Candidate) -> list[Op
     return chosen or names
 
 
-def applicable(criteria: PostingCriteria, position: Optional[str]) -> list[Requirement]:
-    """분야에 적용되는 요건. 법정 우대(sensitive)는 판정·점수에서 뺀다 (ADR-0018)."""
-    return [r for r in criteria.requirements
+def applicable(criteria: PostingCriteria, position: Optional[str],
+               extra: tuple[Requirement, ...] | list[Requirement] = ()) -> list[Requirement]:
+    """분야에 적용되는 요건 (+ 도출 요건). 법정 우대(sensitive)는 판정·점수에서 뺀다 (ADR-0018)."""
+    return [r for r in [*criteria.requirements, *extra]
             if not r.sensitive and (position is None or not r.positions or position in r.positions)]
+
+
+def derived_requirements(criteria: PostingCriteria) -> list[Requirement]:
+    return position_fit_requirements(criteria) if needs_position_fit(criteria) else []
+
+
+def posting_notes(criteria: PostingCriteria, derived: list[Requirement]) -> list[str]:
+    """정보가 부족한 공고를 드러낸다 — 점수를 얼마나 믿을 수 있는지 (스펙 05)."""
+    if derived:
+        return [f"공고 이미지에 직무 관련 요건이 없어, 모집분야 {len(derived)}개의 이름에서 '직무 적합도' 우대 요건을 "
+                "도출해 반영함 — 공고에 명시된 요건이 아님 (가중치에서 끌 수 있음)"]
+    jobish = [r for r in criteria.requirements if not r.sensitive
+              and (r.category in JOB_CATEGORIES or r.positions)]
+    if not jobish:
+        return ["공고 이미지에 직무 관련 요건이 없어 공통 자격만으로 점수를 매김 — 지원자 간 점수 차이가 작을 수 있음"]
+    return []
 
 
 def score_candidate(llm: LLM, criteria: PostingCriteria, candidate: Candidate, *, model: str, today: str,
                     weights: Weights) -> CandidateScore:
     positions = target_positions(criteria, candidate)
+    extra = derived_requirements(criteria)
+    order = [*criteria.requirements, *extra]
     union: dict[str, Requirement] = {}
     for p in positions:
-        for r in applicable(criteria, p):
+        for r in applicable(criteria, p, extra):
             union.setdefault(r.id, r)
-    reqs = sorted(union.values(), key=criteria.requirements.index)
+    reqs = sorted(union.values(), key=order.index)
     named = [p for p in positions if p is not None]
     out = judge(llm, criteria, candidate, reqs, model=model, positions=named or None)   # 지원자당 1회
     judged = {j.requirement_id: j for j in judge_requirements(out, reqs, candidate, today=today)}
-    per_position = [aggregate([judged[r.id] for r in applicable(criteria, p)], p, weights) for p in positions]
-    best = max(per_position, key=lambda ps: ps.raw)                   # 동점이면 먼저 평가한 분야
+    per_position = [aggregate([judged[r.id] for r in applicable(criteria, p, extra)], p, weights) for p in positions]
     excluded = [r.text for r in criteria.requirements if r.sensitive]
-    return CandidateScore(rank=0, candidate_id=candidate.id, name=candidate.name, score=best.score, raw=best.raw,
+    return _pick(candidate.id, candidate.name, per_position, excluded)
+
+
+def _pick(candidate_id: str, name: str, per_position: list, excluded: list[str]) -> CandidateScore:
+    best = max(per_position, key=lambda ps: ps.raw)                   # 동점이면 먼저 평가한 분야
+    tied = len(per_position) > 1 and all(abs(ps.raw - best.raw) < 1e-9 for ps in per_position)
+    return CandidateScore(rank=0, candidate_id=candidate_id, name=name, score=best.score, raw=best.raw,
                           position=best.position, positions=per_position, summary=summarize(best, excluded),
-                          excluded_sensitive=excluded)
+                          excluded_sensitive=excluded, tied_positions=tied)
 
 
 def match(ref: str, settings: Settings, *, llm: LLM, candidates_dir: Path, refresh: bool = False,
@@ -62,7 +87,8 @@ def match(ref: str, settings: Settings, *, llm: LLM, candidates_dir: Path, refre
     if criteria is None:
         raise RuntimeError(f"공고 {posting_id}의 조건이 없음 — 먼저 `jobfit extract {posting_id}`")
     existing = None if refresh else load_result(settings.data_dir, SITE, posting_id)
-    if existing is not None and existing.posting.criteria_extracted_at == criteria.extracted_at:
+    if (existing is not None and existing.posting.criteria_extracted_at == criteria.extracted_at
+            and existing.scoring_version == SCORING_VERSION):
         log(f"공고 {posting_id}: 기존 매칭 결과 사용 (--refresh로 다시)")
         return existing                                # 조건이 다시 추출됐으면 재사용하지 않는다
     if not criteria.suitable or not applicable(criteria, None):
@@ -83,6 +109,7 @@ def match(ref: str, settings: Settings, *, llm: LLM, candidates_dir: Path, refre
         posting=PostingRef(site=SITE, posting_id=posting_id, title=criteria.title,
                            criteria_extracted_at=criteria.extracted_at),
         matched_at=matched_at, model=settings.judge_model, weights=weights, candidates=scores,
+        scoring_version=SCORING_VERSION, notes=posting_notes(criteria, derived_requirements(criteria)),
     )
     save_result(settings.data_dir, result)
     return result
@@ -93,10 +120,7 @@ def rescore(result: MatchResult, weights: Weights) -> MatchResult:
     scores = []
     for c in result.candidates:
         per_position = [aggregate(p.judgments, p.position, weights) for p in c.positions]
-        best = max(per_position, key=lambda ps: ps.raw)
-        scores.append(c.model_copy(update={
-            "score": best.score, "raw": best.raw, "position": best.position, "positions": per_position,
-            "summary": summarize(best, c.excluded_sensitive)}))
+        scores.append(_pick(c.candidate_id, c.name, per_position, c.excluded_sensitive))
     scores.sort(key=lambda s: (-s.raw, s.candidate_id))
     for i, s in enumerate(scores, start=1):
         s.rank = i

@@ -16,7 +16,8 @@ def aggregate(judgments: list[RequirementJudgment], position: Optional[str],
               weights: Weights = Weights()) -> PositionScore:
     js = [x.model_copy() for x in judgments]
     for x in js:
-        x.credit, x.contribution = credit(x.status, weights), 0.0
+        x.credit = None if (x.derived and not weights.use_derived) else credit(x.status, weights)
+        x.contribution = 0.0
     must = [x for x in js if x.priority == "must" and x.credit is not None]
     pref = [x for x in js if x.priority == "preferred" and x.credit is not None]
     if not must and not pref:
@@ -32,7 +33,8 @@ def aggregate(judgments: list[RequirementJudgment], position: Optional[str],
         position=position, score=math.floor(raw + 0.5), raw=raw,
         must_met=sum(x.status == "met" for x in must), must_total=len(must),
         preferred_met=sum(x.status == "met" for x in pref), preferred_total=len(pref),
-        unmet_must=unmet_must, unknown=[x.requirement_id for x in js if x.status == "unknown"],
+        unmet_must=unmet_must,
+        unknown=[x.requirement_id for x in js if x.status == "unknown" and x.credit is not None],
         judgments=js,
     )
 
@@ -49,7 +51,7 @@ def summarize(ps: PositionScore, excluded_sensitive: list[str]) -> list[str]:
     lines = [head]
 
     def pick(status: str) -> list[RequirementJudgment]:
-        return [x for x in ps.judgments if x.status == status]
+        return [x for x in ps.judgments if x.status == status and x.credit is not None]   # 계산에서 뺀 요건 제외
 
     if unmet := pick("unmet"):
         lines.append("미충족: " + "; ".join(

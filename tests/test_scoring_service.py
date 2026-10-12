@@ -169,3 +169,54 @@ def test_rescore_changes_ranking_without_llm(tmp_path):
     for c in again.candidates:
         assert sum(j.contribution for j in c.best.judgments) == pytest.approx(c.raw)
     assert load_result(tmp_path / "data", "saramin", "55") == result           # 저장본은 그대로
+
+
+COMMON_ONLY = [make_requirement("r1", "야간근무"), make_requirement("r3", "보훈", priority="preferred", sensitive=True)]
+
+
+def by_declaration_and_fit(user: str) -> LLMJudgeOutput:
+    """by_declaration + 도출 요건(p*)은 자기 신고에 분야 이름이 있으면 met."""
+    out = by_declaration(user)
+    head, resume = user.split("# 이력서", 1)
+    for line in (l for l in head.splitlines() if l.startswith("- p")):
+        rid, name = line[2:].split(" ", 1)[0], line.split("'")[1]
+        hit = next((l.split(" ", 1)[1] for l in resume.strip().splitlines() if f"[자기 신고] {name}" in l), None)
+        out.judgments.append(LLMJudgment(requirement_id=rid, status="met" if hit else "unknown",
+                                         quotes=[hit] if hit else [], reason="r", relevant_experience=[]))
+    return out
+
+
+def test_posting_without_job_requirements_scores_position_fit(tmp_path):
+    write_criteria(tmp_path, make_criteria(COMMON_ONLY, positions=["재무", "실험"]))
+    d = write_candidates(tmp_path, person("a", ["야간근무 가능", "재무"]), person("b", ["야간근무 가능"]))
+    result = match("55", settings(tmp_path), llm=FakeLLM(structured=[by_declaration_and_fit] * 2), candidates_dir=d,
+                   log=quiet)
+    a, b = result.candidates
+    assert (a.candidate_id, a.score, a.position, a.tied_positions) == ("a", 100, "재무", False)
+    assert (b.candidate_id, b.score, b.tied_positions) == ("b", 85, True)            # 적합도 확인 필요 → 전 분야 동일
+    fit = next(j for j in a.best.judgments if j.requirement_id == "p1")
+    assert fit.derived and "derived_from_position" in fit.flags
+    assert any("모집분야" in n and "도출" in n for n in result.notes)
+    off = rescore(result, Weights(use_derived=False))                               # 끄면 공통 자격만
+    assert [c.score for c in off.candidates] == [100, 100]
+
+
+def test_posting_with_job_requirements_is_unchanged(tmp_path):
+    write_criteria(tmp_path, make_criteria(REQS + [make_requirement("r4", "생산 경험", "preferred", "experience")],
+                                           positions=["생산직"]))
+    d = write_candidates(tmp_path, person("a", ["야간근무 가능"]))
+    seen = []
+    llm = FakeLLM(structured=[lambda user: (seen.append(user), by_declaration(user))[1]])
+    result = match("55", settings(tmp_path), llm=llm, candidates_dir=d, log=quiet)
+    assert "- p1" not in seen[0] and result.notes == []
+
+
+def test_old_results_are_recomputed_after_scoring_changes(tmp_path):
+    write_criteria(tmp_path, make_criteria(REQS))
+    d = write_candidates(tmp_path, person("a", ["야간근무 가능"]))
+    first = match("55", settings(tmp_path), llm=FakeLLM(structured=[by_declaration]), candidates_dir=d, log=quiet)
+    from scoring.result import save_result
+    save_result(tmp_path / "data", first.model_copy(update={"scoring_version": 1}))   # 예전 방식으로 만든 결과
+    llm = FakeLLM(structured=[by_declaration])
+    match("55", settings(tmp_path), llm=llm, candidates_dir=d, log=quiet)
+    assert llm.calls

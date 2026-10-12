@@ -42,6 +42,14 @@ def test_custom_weights_rescore_without_llm():
     assert aggregate(js, None, Weights(must_share=0.5)).score == 50
 
 
+def test_switched_off_derived_requirements_leave_no_trace_in_counts_or_summary():
+    fit = j("p1", "unknown", "preferred", text="'재무' 직무 적합")
+    fit.derived = True
+    ps = aggregate([j("r1", "met"), fit], None, Weights(use_derived=False))
+    assert ps.score == 100 and ps.unknown == [] and ps.preferred_total == 0
+    assert not any("직무 적합" in line for line in summarize(ps, []))
+
+
 def test_nothing_to_score_is_an_error():
     with pytest.raises(ValueError):
         aggregate([j("r1", "not_applicable")], None)

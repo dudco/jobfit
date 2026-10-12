@@ -72,3 +72,14 @@ def test_bad_quotes_on_unknown_are_dropped_without_flag():
 def test_not_applicable_with_bad_quote_is_downgraded():
     got = run([make_requirement("r1", "남성의 경우 병역필")], ("r1", "not_applicable", ["[병역] 비대상"], []))
     assert (got["r1"].status, got["r1"].flags) == ("unknown", ["quote_not_found"])
+
+
+def test_derived_requirement_cannot_be_not_applicable():
+    """도출 요건은 '그 분야로 평가한다면 관련 배경이 있는가'다 — 대상 조건이 없으므로 '해당 없음'은 '미충족'으로 읽는다.
+    (KT&G 실제 판정: '지원 분야가 재무라 브랜드 디자인과 관련 없다' → not_applicable → 모든 분야 점수가 같아짐)"""
+    fit = make_requirement("p1", "'포장' 직무 관련 경력·전공·자격", "preferred", "experience", positions=["포장"])
+    fit.flags = ["derived_from_position"]
+    got = run([fit], ("p1", "not_applicable", ["[경력 1] A식품 · 포장 · 2022-01~2023-12"], []))
+    assert (got["p1"].status, got["p1"].derived) == ("unmet", True)
+    got = run([fit], ("p1", "not_applicable", [], []))                 # 근거가 없으면 기존 규칙대로 확인 필요
+    assert (got["p1"].status, got["p1"].flags) == ("unknown", ["no_evidence", "derived_from_position"])

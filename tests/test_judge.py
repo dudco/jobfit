@@ -50,3 +50,15 @@ def test_judge_calls_structured_once_with_cache_tag():
     llm = FakeLLM(structured=[LLMJudgeOutput(judgments=[])])
     judge(llm, make_criteria(reqs), CAND, reqs, model="m")
     assert llm.calls == [("structured", "judge-55-c9")]
+
+
+def test_derived_requirement_line_tells_judge_to_assume_that_position():
+    """KT&G 실제 판정에서 도출 요건을 '희망 분야가 아니라서 해당 없음'으로 판정 → 판정 지시를 요건 줄에 붙인다.
+    공통 프롬프트(JUDGE_SYSTEM)는 바꾸지 않는다 — 도출 요건이 없는 공고의 판정 캐시를 유지."""
+    from scoring.judge import JUDGE_SYSTEM, requirement_line
+    fit = make_requirement("p1", "'시설관리' 직무 관련 경력·전공·자격", "preferred", "experience", positions=["시설관리"])
+    fit.flags = ["derived_from_position"]
+    line = requirement_line(fit)
+    assert "희망 분야와 상관없이" in line and "not_applicable" in line
+    assert "희망 분야와 상관없이" not in requirement_line(make_requirement("r1", "야간근무"))
+    assert "희망 분야와 상관없이" not in JUDGE_SYSTEM

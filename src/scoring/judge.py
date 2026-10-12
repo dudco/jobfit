@@ -9,6 +9,7 @@ from llm import LLM
 from preprocessing.criteria import PostingCriteria, Requirement
 
 from .candidate import Candidate, Status, render
+from .derive import DERIVED_FLAG
 
 JUDGE_SYSTEM = """당신은 채용 서류 심사자다. 공고의 요건 목록과 지원자 이력서(줄 번호가 붙은 텍스트)를 받아, 요건마다 이력서가 그 요건을 충족하는지 판정한다.
 
@@ -49,7 +50,11 @@ class LLMJudgeOutput(BaseModel):
 def requirement_line(r: Requirement) -> str:
     scope = ", ".join(r.positions) if r.positions else "전체"
     tag = "필수" if r.priority == "must" else "우대"
-    return f"- {r.id} [{tag} · {r.category} · 모집분야: {scope}] {r.text}"
+    line = f"- {r.id} [{tag} · {r.category} · 모집분야: {scope}] {r.text}"
+    if DERIVED_FLAG in r.flags:      # 모집분야에서 도출한 요건 (ADR-0022) — 이 줄에만 지시를 붙여 공통 프롬프트·캐시를 유지
+        line += (" (모집분야에서 도출: 희망 분야와 상관없이 이 분야에 지원한다고 보고 관련 경력·전공·자격이 있는지 판단한다."
+                 " 대상 조건이 없으므로 not_applicable을 쓰지 않는다)")
+    return line
 
 
 def context_lines(criteria: PostingCriteria, positions: Optional[list[str]]) -> list[str]:

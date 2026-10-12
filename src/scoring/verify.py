@@ -43,6 +43,8 @@ def judge_requirements(out: LLMJudgeOutput, requirements: list[Requirement], can
         else:
             quotes = [LINE_NO.sub("", clean_text(q)).strip() for q in j.quotes if q.strip()]
             status, reason, flags, picked = j.status, j.reason, [], j.relevant_experience
+            if status == "not_applicable" and DERIVED_FLAG in r.flags:
+                status = "unmet"          # 도출 요건엔 대상 조건이 없다 — "관련 없음"은 미충족 (ADR-0022)
             if status == "unknown":
                 quotes = [q for q in quotes if _found(q, text)]    # 점수에 영향 없음 — 틀린 인용만 버린다
             elif not all(_found(q, text) for q in quotes):

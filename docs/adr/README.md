@@ -9,6 +9,7 @@
 | [0003](0003-python-stack.md) | Python + uv + pydantic + httpx, CLI는 Typer | 채택 | 01 |
 | [0004](0004-crawl-detail-iframe-over-http.md) | 사람인 상세 본문은 iframe 문서를 HTTP로 직접 수집 (브라우저 자동화·공식 API 미사용) | 채택 (실 페이지 검증 조건부) | 01 |
 | [0005](0005-origin-snapshot.md) | 공고 원본을 스냅샷(원본 바이트 + 매니페스트)으로 보존하고 단계 간 계약으로 삼는다 | 채택 | 01 |
+| [0006](0006-flat-src-layout.md) | 소스는 `src/` 바로 아래에 둔다 (패키지 네임스페이스 없음) | 채택 | 01 |
 
 ## 템플릿
 

@@ -70,7 +70,7 @@ sequenceDiagram
 ### 모듈
 
 ```
-src/jobfit/
+src/                       (ADR-0006: 패키지 네임스페이스 없이 src/ 바로 아래)
   settings.py              데이터 경로, User-Agent, 요청 간격 (환경변수)
   crawler/
     saramin.py             사람인 HTML 규칙 — 순수 함수 (네트워크 없음)

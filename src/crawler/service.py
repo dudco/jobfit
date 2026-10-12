@@ -8,7 +8,7 @@ from typing import Callable, Optional
 
 import httpx
 
-from ..settings import Settings
+from settings import Settings
 from . import saramin
 from .images import extension, inspect_image
 from .snapshot import (

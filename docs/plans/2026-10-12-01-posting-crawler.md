@@ -2,6 +2,8 @@
 
 > **에이전트 작업자용:** 필수 하위 스킬 — `superpowers:executing-plans`(또는 `superpowers:subagent-driven-development`)로 태스크 단위로 실행한다. 단계는 체크박스(`- [ ]`)로 추적한다.
 
+> **레이아웃 변경 (Task 8 이후, [ADR-0006](../adr/0006-flat-src-layout.md)):** Task 1–8은 `src/jobfit/` 패키지 구조로 작성·구현되었고, 이후 소스를 `src/` 바로 아래로 옮겼다. Task 1–8 본문은 실행 당시 기록으로 남겨 둔다. 현재 경로로 읽을 때: `src/jobfit/X` → `src/X`, `from jobfit.X import …` → `from X import …`, `from jobfit import cli` → `import cli`.
+
 **스펙:** [2026-10-12-01-posting-crawler-design.md](../specs/2026-10-12-01-posting-crawler-design.md)
 
 **목표:** `jobfit crawl <사람인 URL>`로 이미지형 공고의 원본(HTML·본문 이미지)을 `data/postings/saramin/{rec_idx}/`에 스냅샷으로 저장하고, 실제 공고 2건으로 사이트 가정(H1–H4)을 검증한다.
@@ -1037,7 +1039,7 @@ git commit -m "feat(cli): jobfit crawl / jobfit postings"
 
 **Files:**
 - Create: `tests/fixtures/saramin_detail_real.html`
-- Modify: `tests/test_saramin.py`, (필요 시) `src/jobfit/crawler/saramin.py`, `docs/adr/0004-crawl-detail-iframe-over-http.md`, 스펙 9장
+- Modify: `tests/test_saramin.py`, (필요 시) `src/crawler/saramin.py`, `docs/adr/0004-crawl-detail-iframe-over-http.md`, 스펙 9장
 
 - [ ] **Step 1: 공고 A 고르기**
 
@@ -1095,7 +1097,7 @@ Expected: 12 passed
 - [ ] **Step 6: 커밋**
 
 ```bash
-git add tests src/jobfit/crawler docs
+git add tests src/crawler docs
 git commit -m "test(crawler): 실제 사람인 상세 HTML로 사이트 가정(H1–H4) 검증"
 ```
 
@@ -1133,8 +1135,8 @@ Expected: 두 공고 모두 `이미지 공고 = 예`
 
 ```bash
 python - <<'PY'
-from jobfit.crawler.snapshot import list_snapshots
-from jobfit.settings import load_settings
+from crawler.snapshot import list_snapshots
+from settings import load_settings
 
 for s in list_snapshots(load_settings().data_dir):
     sizes = ", ".join(f"{i.width}x{i.height} {i.format}" for i in s.images)

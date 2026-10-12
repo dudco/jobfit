@@ -2,7 +2,7 @@ from io import BytesIO
 
 from PIL import Image
 
-from jobfit.crawler.images import ImageInfo, extension, inspect_image
+from crawler.images import ImageInfo, extension, inspect_image
 
 
 def encode(fmt, w, h):

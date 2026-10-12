@@ -18,14 +18,16 @@ dependencies = [
 dev = ["pytest>=8.0"]
 
 [project.scripts]
-jobfit = "jobfit.cli:app"
+jobfit = "cli:app"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/jobfit"]
+# src/ 아래 모듈을 최상위로 설치 (ADR-0006)
+only-include = ["src"]
+sources = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -10,7 +10,7 @@ flowchart LR
         UI["UI<br/>정적 웹 페이지"]
     end
 
-    subgraph core["애플리케이션 서비스 (jobfit 패키지)"]
+    subgraph core["애플리케이션 서비스 (src/)"]
         direction LR
         C["① 수집<br/>crawler"]
         P["② 전처리·구조화<br/>preprocessing"]

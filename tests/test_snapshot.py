@@ -1,6 +1,6 @@
 import json
 
-from jobfit.crawler.snapshot import (
+from crawler.snapshot import (
     PostingSnapshot, SourceRef, StoredFile, list_snapshots, load_snapshot, save_file, save_snapshot, snapshot_dir,
 )
 

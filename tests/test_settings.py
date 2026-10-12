@@ -1,4 +1,4 @@
-from jobfit.settings import load_settings
+from settings import load_settings
 
 KEYS = ("JOBFIT_DATA_DIR", "JOBFIT_REQUEST_INTERVAL")
 

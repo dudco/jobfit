@@ -5,9 +5,9 @@ import httpx
 import pytest
 from PIL import Image
 
-from jobfit.crawler.service import crawl
-from jobfit.crawler.snapshot import load_snapshot, snapshot_dir
-from jobfit.settings import Settings
+from crawler.service import crawl
+from crawler.snapshot import load_snapshot, snapshot_dir
+from settings import Settings
 
 VIEW = "https://www.saramin.co.kr/zf_user/jobs/relay/view?rec_idx=123"
 

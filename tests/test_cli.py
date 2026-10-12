@@ -1,8 +1,8 @@
 from typer.testing import CliRunner
 
-from jobfit import cli
-from jobfit.crawler import service
-from jobfit.crawler.snapshot import (
+import cli
+from crawler import service
+from crawler.snapshot import (
     PostingSnapshot, SourceRef, StoredFile, StoredImage, save_snapshot, snapshot_dir,
 )
 

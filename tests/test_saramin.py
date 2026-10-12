@@ -1,6 +1,6 @@
 import pytest
 
-from jobfit.crawler.saramin import parse_rec_idx
+from crawler.saramin import parse_rec_idx
 
 
 @pytest.mark.parametrize("ref", [
@@ -19,7 +19,7 @@ def test_parse_rec_idx_rejects_refs_without_id(ref):
         parse_rec_idx(ref)
 
 
-from jobfit.crawler.saramin import extract_image_urls
+from crawler.saramin import extract_image_urls
 
 DETAIL_HTML = """
 <html><body>
@@ -46,7 +46,7 @@ def test_falls_back_to_whole_document_without_content_container():
     assert extract_image_urls('<img src="/a/poster.jpg">') == ["https://www.saramin.co.kr/a/poster.jpg"]
 
 
-from jobfit.crawler.saramin import body_text_length, extract_title
+from crawler.saramin import body_text_length, extract_title
 
 
 def test_body_text_length_ignores_whitespace_scripts_and_outside_text():

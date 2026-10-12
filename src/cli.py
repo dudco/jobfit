@@ -7,9 +7,9 @@ import typer
 from rich.console import Console
 from rich.table import Table
 
-from .crawler import service
-from .crawler.snapshot import list_snapshots
-from .settings import load_settings
+from crawler import service
+from crawler.snapshot import list_snapshots
+from settings import load_settings
 
 app = typer.Typer(add_completion=False, no_args_is_help=True, help="이미지 채용공고 수집·구조화·매칭")
 console = Console()

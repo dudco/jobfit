@@ -121,3 +121,20 @@ def test_unprocessable_postings_are_hidden_from_main_list_and_listed_separately(
     page = c.get("/excluded")
     assert page.status_code == 200 and "처리하지 않은 공고" in page.text
     assert "/excluded" not in c.get("/").text                         # 기본 화면에는 링크도 두지 않음
+
+
+def test_cost_endpoint_and_page(tmp_path):
+    c, s = client_for(tmp_path)
+    assert c.get("/api/cost").json()["total"]["calls"] == 0                   # 호출 기록 없음
+    c.post("/api/postings/55/match", json={"refresh": False})                 # 대역 LLM — 캐시 없음
+    llm_dir = s.data_dir / "cache" / "llm"
+    llm_dir.mkdir(parents=True, exist_ok=True)
+    (llm_dir / "judge-55-a-1.json").write_text('{"tag": "judge-55-a", "model": "gpt-4.1", "response": {}, '
+                                               '"usage": {"input_tokens": 1000, "output_tokens": 100}}')
+    body = c.get("/api/cost").json()
+    assert body["total"]["calls"] == 1 and abs(body["total"]["cost"] - 0.0028) < 1e-9
+    [p] = body["postings"]
+    assert (p["posting_id"], p["title"]) == ("55", "테스트 공고")
+    page = c.get("/cost")
+    assert page.status_code == 200 and "/api/cost" in page.text
+    assert 'href="/cost"' in c.get("/").text                                  # 매칭 화면에서 들어갈 수 있다

@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import math
 import statistics
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Optional
 
@@ -117,41 +117,91 @@ def _estimate_input(tag: str, data_dir: Path) -> Optional[int]:
     return None
 
 
-def summarize(data_dir: Path) -> list[UsageRow]:
-    rows: dict[tuple[str, str, str], UsageRow] = {}
-    pending: list[tuple[str, str, int]] = []                   # 추정할 수 없는 호출 (모델, 단계, 출력 토큰)
+@dataclass
+class Call:
+    basis: str
+    model: str
+    stage: str
+    posting_id: str
+    input_tokens: int
+    cached_input_tokens: int
+    output_tokens: int
 
-    def add(basis, model, stage, inp, cached, out):
-        row = rows.setdefault((basis, model, stage), UsageRow(basis, model, stage))
-        row.calls += 1
-        row.input_tokens += inp
-        row.cached_input_tokens += cached
-        row.output_tokens += out
-        row.cost += cost_of(model, inp, cached, out)
+    @property
+    def cost(self) -> float:
+        return cost_of(self.model, self.input_tokens, self.cached_input_tokens, self.output_tokens)
 
+
+def calls(data_dir: Path) -> list[Call]:
+    """캐시 파일마다 호출 하나. 사용량이 없으면 재료로 추정, 재료도 없으면 같은 단계 추정치의 중앙값."""
+    out: list[Call] = []
+    pending: list[tuple[str, str, str, int]] = []              # (모델, 단계, 공고, 출력 토큰)
     for path in sorted((data_dir / "cache" / "llm").glob("*.json")):
         rec = json.loads(path.read_text(encoding="utf-8"))
         tag, model = rec.get("tag", path.stem), rec.get("model", "gpt-4.1")
-        stage = STAGES.get(tag.split("-")[0], "기타")
+        parts = tag.split("-")
+        stage, posting_id = STAGES.get(parts[0], "기타"), parts[1] if len(parts) > 1 else ""
         usage = rec.get("usage")
         if usage:
-            add("실측", model, stage, usage.get("input_tokens", 0), usage.get("cached_input_tokens", 0),
-                usage.get("output_tokens", 0))
+            out.append(Call("실측", model, stage, posting_id, usage.get("input_tokens") or 0,
+                            usage.get("cached_input_tokens") or 0, usage.get("output_tokens") or 0))
             continue
         response = rec.get("response")
-        out = estimate_tokens(response if isinstance(response, str) else json.dumps(response, ensure_ascii=False))
+        out_tokens = estimate_tokens(response if isinstance(response, str)
+                                     else json.dumps(response, ensure_ascii=False))
         inp = _estimate_input(tag, data_dir)
         if inp is None:
-            pending.append((model, stage, out))
+            pending.append((model, stage, posting_id, out_tokens))
         else:
-            add("추정", model, stage, inp, 0, out)
-    for model, stage, out in pending:                         # 재료가 사라진 호출은 같은 단계 추정치의 중앙값으로
-        same = [r.input_tokens / r.calls for (b, m, s), r in rows.items() if s == stage and r.calls]
-        add("추정", model, stage, round(statistics.median(same)) if same else 1500, 0, out)
-
+            out.append(Call("추정", model, stage, posting_id, inp, 0, out_tokens))
+    for model, stage, posting_id, out_tokens in pending:
+        same = [c.input_tokens for c in out if c.basis == "추정" and c.stage == stage]
+        out.append(Call("추정", model, stage, posting_id, round(statistics.median(same)) if same else 1500, 0,
+                        out_tokens))
     for path in sorted((data_dir / "cache" / "jev").glob("*.json")):
         rec = json.loads(path.read_text(encoding="utf-8"))
-        usage = rec.get("usage", {})
-        add("실측", rec.get("model", "jev"), "판정(JEV)", usage.get("input_tokens") or 0, 0,
-            usage.get("output_tokens") or 0)
+        usage = rec.get("usage") or {}
+        out.append(Call("실측", rec.get("model", "jev"), "판정(JEV)", path.stem.split("-")[0],
+                        usage.get("input_tokens") or 0, 0, usage.get("output_tokens") or 0))
+    return out
+
+
+def _add(row, c: Call) -> None:
+    row.calls += 1
+    row.input_tokens += c.input_tokens
+    row.cached_input_tokens += c.cached_input_tokens
+    row.output_tokens += c.output_tokens
+    row.cost += c.cost
+
+
+def summarize(data_dir: Path, records: Optional[list[Call]] = None) -> list[UsageRow]:
+    """구분(실측·추정) × 모델 × 단계별 합계."""
+    rows: dict[tuple[str, str, str], UsageRow] = {}
+    for c in calls(data_dir) if records is None else records:
+        _add(rows.setdefault((c.basis, c.model, c.stage), UsageRow(c.basis, c.model, c.stage)), c)
     return sorted(rows.values(), key=lambda r: (r.basis, r.model, r.stage))
+
+
+def report(data_dir: Path, titles: Optional[dict[str, str]] = None) -> dict:
+    """화면·API용: 단계별 행, 공고별 합계(비용 큰 순), 전체 합계, 가격표."""
+    records = calls(data_dir)
+    rows = summarize(data_dir, records)
+    postings: dict[str, dict] = {}
+    for c in records:
+        p = postings.setdefault(c.posting_id, {"posting_id": c.posting_id, "title": (titles or {}).get(c.posting_id),
+                                               "calls": 0, "cost": 0.0, "stages": {}})
+        p["calls"] += 1
+        p["cost"] += c.cost
+        p["stages"][c.stage] = p["stages"].get(c.stage, 0.0) + c.cost
+    total = UsageRow("", "", "")
+    for c in records:
+        _add(total, c)
+    as_dict = lambda r: {k: v for k, v in asdict(r).items()}
+    return {
+        "rows": [as_dict(r) for r in rows],
+        "postings": sorted(postings.values(), key=lambda p: -p["cost"]),
+        "total": {k: v for k, v in asdict(total).items() if k not in ("basis", "model", "stage")},
+        "measured_calls": sum(c.basis == "실측" for c in records),
+        "prices": {m: {"input": i, "cached_input": ci, "output": o} for m, (i, ci, o) in PRICES.items()},
+        "prices_as_of": PRICES_AS_OF,
+    }

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>jobfit — API 비용</title>
+<style>
+  :root { --bg: #f6f7f9; --panel: #fff; --line: #e3e6ea; --text: #1f2328; --muted: #656d76; --accent: #2f5bd3; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif; }
+  main { max-width: 1100px; margin: 24px auto; padding: 0 20px; display: grid; gap: 16px; }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 16px; overflow-x: auto; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  h2 { font-size: 15px; margin: 0 0 4px; }
+  .sub { color: var(--muted); font-size: 13px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 12px; }
+  .card { border: 1px solid var(--line); border-radius: 8px; padding: 12px; }
+  .card b { display: block; font-size: 22px; font-variant-numeric: tabular-nums; }
+  .card span { color: var(--muted); font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  th { font-size: 12px; color: var(--muted); font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  tfoot td { font-weight: 600; border-bottom: none; }
+  .basis { font-size: 12px; padding: 1px 6px; border-radius: 10px; }
+  .basis.m { background: #e6f4ea; color: #1a7f37; }
+  .basis.e { background: #fff4e5; color: #9a6700; }
+  .bar { height: 6px; background: #dbe4fb; border-radius: 3px; min-width: 2px; }
+  .bar i { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+  a { color: var(--accent); }
+  .empty { color: var(--muted); padding: 24px; text-align: center; }
+</style>
+</head>
+<body>
+<main>
+  <section>
+    <h1>API 비용</h1>
+    <div class="sub">지금까지 실제로 호출한 API의 토큰과 비용입니다. 응답 캐시 파일 하나 = 유료 호출 하나이고, 같은 입력의 재실행은 캐시 적중이라 비용이 없습니다.
+      <a href="/">매칭 화면으로</a></div>
+    <div class="cards" id="cards"></div>
+  </section>
+  <section>
+    <h2>단계별</h2>
+    <div class="sub"><span class="basis m">실측</span> 응답에 기록된 토큰 ·
+      <span class="basis e">추정</span> 사용량 기록 이전 호출 — 남은 프롬프트 재료(조각 이미지 크기, 전사, 이력서)로 다시 센 값</div>
+    <div id="stages"><div class="empty">불러오는 중…</div></div>
+  </section>
+  <section>
+    <h2>공고별</h2>
+    <div id="postings"></div>
+  </section>
+  <section>
+    <h2>가격표</h2>
+    <div class="sub" id="price-note"></div>
+    <div id="prices"></div>
+  </section>
+</main>
+<script>
+"use strict";
+const usd = (v, d = 4) => "$" + v.toFixed(d);
+const int = (v) => v.toLocaleString();
+function el(tag, attrs = {}, ...children) {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+  for (const c of children.flat()) if (c != null) n.append(c instanceof Node ? c : String(c));
+  return n;
+}
+function table(head, rows, foot) {
+  const t = el("table", {}, el("thead", {}, el("tr", {}, head.map(([h, cls]) => el("th", cls ? { class: cls } : {}, h)))));
+  t.append(el("tbody", {}, rows.map((r) => el("tr", {}, r))));
+  if (foot) t.append(el("tfoot", {}, el("tr", {}, foot)));
+  return t;
+}
+const td = (v, cls) => el("td", cls ? { class: cls } : {}, v);
+
+fetch("/api/cost").then((r) => r.json()).then((c) => {
+  const t = c.total;
+  document.getElementById("cards").replaceChildren(
+    ...[[usd(t.cost, 2), "총 비용 (USD)"], [int(t.calls), `호출 (실측 ${int(c.measured_calls)})`],
+        [int(t.input_tokens), "입력 토큰"], [int(t.output_tokens), "출력 토큰"]]
+      .map(([v, l]) => el("div", { class: "card" }, el("b", {}, v), el("span", {}, l))));
+  if (!t.calls) {
+    document.getElementById("stages").innerHTML = '<div class="empty">아직 API 호출 기록이 없습니다.</div>';
+  } else {
+    document.getElementById("stages").replaceChildren(table(
+      [["구분"], ["모델"], ["단계"], ["호출", "num"], ["입력", "num"], ["캐시 입력", "num"], ["출력", "num"], ["비용", "num"]],
+      c.rows.map((r) => [td(el("span", { class: "basis " + (r.basis === "실측" ? "m" : "e") }, r.basis)), td(r.model),
+                         td(r.stage), td(int(r.calls), "num"), td(int(r.input_tokens), "num"),
+                         td(int(r.cached_input_tokens), "num"), td(int(r.output_tokens), "num"), td(usd(r.cost), "num")]),
+      [td("합계"), td(""), td(""), td(int(t.calls), "num"), td(int(t.input_tokens), "num"),
+       td(int(t.cached_input_tokens), "num"), td(int(t.output_tokens), "num"), td(usd(t.cost), "num")]));
+  }
+  const max = Math.max(...c.postings.map((p) => p.cost), 1e-9);
+  document.getElementById("postings").replaceChildren(c.postings.length ? table(
+    [["rec_idx"], ["공고"], ["호출", "num"], ["단계별 비용"], ["비용", "num"], [""]],
+    c.postings.map((p) => [td(p.posting_id), td(p.title || "—"), td(int(p.calls), "num"),
+      td(Object.entries(p.stages).map(([s, v]) => `${s} ${usd(v, 3)}`).join(" · ")), td(usd(p.cost), "num"),
+      el("td", { style: "width:120px" }, el("div", { class: "bar" }, el("i", { style: `width:${(p.cost / max) * 100}%` })))])
+  ) : el("div", { class: "empty" }, "—"));
+  document.getElementById("price-note").textContent =
+    `USD / 100만 토큰, ${c.prices_as_of} 공개 가격 기준 (src/usage.py PRICES). 집계는 남아 있는 캐시 기준의 하한입니다 — 실패한 호출, --refresh로 덮어쓴 호출, 지운 캐시는 세지 않습니다.`;
+  document.getElementById("prices").replaceChildren(table(
+    [["모델"], ["입력", "num"], ["캐시된 입력", "num"], ["출력", "num"]],
+    Object.entries(c.prices).map(([m, p]) => [td(m), td(usd(p.input, 3), "num"), td(usd(p.cached_input, 3), "num"),
+                                               td(p.output ? usd(p.output, 2) : "무료", "num")])));
+}).catch((e) => { document.getElementById("stages").textContent = "불러오지 못했습니다: " + e.message; });
+</script>
+</body>
+</html>

@@ -144,6 +144,19 @@ def create_app(settings: Optional[Settings] = None, llm: Optional[LLM] = None) -
                                            reason="; ".join(c.warnings) or "추출된 요건 없음", fetched_at=None))
         return out
 
+    @app.get("/api/cost")
+    def cost():
+        """지금까지 쓴 API 토큰·비용 — 캐시 파일 기준 (캐시 적중은 무료). 단계별·공고별 합계와 가격표."""
+        from usage import report
+
+        titles = {snap.source.posting_id: snap.title for snap in list_snapshots(settings.data_dir)}
+        titles.update({c.source.posting_id: c.title for c in list_criteria(settings.data_dir) if c.title})
+        return report(settings.data_dir, titles)
+
+    @app.get("/cost", include_in_schema=False)
+    def cost_page():
+        return FileResponse(WEB_DIR / "cost.html", media_type="text/html")
+
     @app.get("/excluded", include_in_schema=False)
     def excluded_page():
         return FileResponse(WEB_DIR / "excluded.html", media_type="text/html")

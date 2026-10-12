@@ -6,7 +6,7 @@ import pytest
 from pydantic import BaseModel
 
 from llm import CachedLLM
-from usage import PRICES, estimate_tokens, image_tokens, summarize
+from usage import PRICES, estimate_tokens, image_tokens, report, summarize
 
 
 class Out(BaseModel):
@@ -55,3 +55,30 @@ def test_token_estimates():
     assert image_tokens(1024, 1024) == 85 + 170 * 4                           # 768×768 → 2×2 조각
     assert image_tokens(860, 3170) == 85 + 170 * image_tokens.tiles(860, 3170)
     assert set(PRICES) >= {"gpt-4.1", "gpt-4.1-mini", "jev"}
+
+
+def _write_calls(root):
+    llm_dir = root / "cache" / "llm"
+    llm_dir.mkdir(parents=True)
+    for name, tag, inp in (("judge-55-a-1", "judge-55-a", 1_000_000), ("judge-77-a-2", "judge-77-a", 500_000)):
+        (llm_dir / f"{name}.json").write_text(json.dumps({
+            "tag": tag, "model": "gpt-4.1", "response": {},
+            "usage": {"input_tokens": inp, "cached_input_tokens": 0, "output_tokens": 0}}))
+    jev_dir = root / "cache" / "jev"
+    jev_dir.mkdir()
+    (jev_dir / "55-a-3.json").write_text(json.dumps({"model": "jev-1.13.0",
+                                                    "usage": {"input_tokens": 1_000_000}, "answers": {}}))
+
+
+def test_report_breaks_cost_down_by_posting_and_totals(tmp_path):
+    _write_calls(tmp_path)
+    r = report(tmp_path)
+    assert r["total"]["calls"] == 3
+    assert r["total"]["cost"] == pytest.approx(2.0 + 1.0 + 0.042)
+    by_posting = {p["posting_id"]: p for p in r["postings"]}
+    assert by_posting["55"]["calls"] == 2 and by_posting["55"]["cost"] == pytest.approx(2.042)
+    assert by_posting["77"]["cost"] == pytest.approx(1.0)
+    assert r["postings"][0]["posting_id"] == "55"                              # 비용 큰 순
+    assert {row["stage"] for row in r["rows"]} == {"판정", "판정(JEV)"}
+    assert r["prices"]["gpt-4.1"] == {"input": 2.0, "cached_input": 0.5, "output": 8.0}
+    assert r["prices_as_of"] and r["measured_calls"] == 3

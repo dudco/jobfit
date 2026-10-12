@@ -84,6 +84,8 @@
   dialog { border: 1px solid var(--line); border-radius: 8px; max-width: min(900px, 94vw); padding: 16px; }
   dialog img { max-width: 100%; border: 1px solid var(--line); margin-top: 8px; }
   dialog::backdrop { background: rgba(0, 0, 0, .35); }
+  #cost-link { margin-left: auto; font-size: 13px; color: var(--muted); text-decoration: none; white-space: nowrap; }
+  #cost-link:hover { color: var(--accent); text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -94,6 +96,7 @@
     <button class="primary" id="run-btn" type="submit">실행</button>
   </form>
   <span id="status"></span>
+  <a id="cost-link" href="/cost" title="지금까지 쓴 API 토큰·비용">API 비용 …</a>
 </header>
 <nav id="tabs"></nav>
 <main>
@@ -381,7 +384,14 @@ function renderDetail() {
 
 async function busy(label, fn) {
   const btn = $("#run-btn"); btn.disabled = true; setStatus(label);
-  try { await fn(); setStatus(""); } catch (e) { setStatus(e.message, true); } finally { btn.disabled = false; }
+  try { await fn(); setStatus(""); } catch (e) { setStatus(e.message, true); }
+  finally { btn.disabled = false; refreshCost(); }       // 새 호출이 생겼을 수 있다
+}
+
+function refreshCost() {
+  api("/api/cost").then((c) => {
+    $("#cost-link").textContent = `API 비용 $${c.total.cost.toFixed(2)} · ${c.total.calls.toLocaleString()}회`;
+  }).catch(() => { $("#cost-link").textContent = "API 비용"; });
 }
 
 function runMatch(refresh = false) {
@@ -402,6 +412,7 @@ $("#run-form").addEventListener("submit", (e) => {
   });
 });
 
+refreshCost();
 api("/api/flags").then((f) => { FLAGS = f; }).catch(() => {})
   .then(() => loadPostings()).catch((e) => setStatus(e.message, true));
 </script>

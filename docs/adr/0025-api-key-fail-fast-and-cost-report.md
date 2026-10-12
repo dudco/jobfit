@@ -14,7 +14,7 @@
 
 1. **키 확인을 작업 앞에 둔다.** OpenAI를 쓸 수 있는 명령(`extract`, `match`, `run`, `models`)과 API(`POST …/match`, `POST /api/run`)는 `OPENAI_API_KEY`, `experiment-jev`는 `TYPESAFE_API_KEY`가 비어 있으면 바로 멈춘다 — CLI는 한 줄 안내와 종료 코드 1, API는 400. 키가 필요 없는 명령(`crawl`, `postings`, `criteria`, `result`, `evaluate`, `cost`, `serve`, 화면의 가중치 재집계)은 그대로다.
 2. **캐시 파일에 사용량을 함께 남긴다.** 응답의 `usage`(입력·캐시된 입력·출력 토큰)를 캐시 파일의 `usage`에 기록한다. 캐시 파일 하나 = 실제 호출 하나이므로, 캐시 디렉터리가 곧 호출 기록이다.
-3. **`jobfit cost`로 집계한다.** 모델 × 단계(전사·구조화·판정·JEV 판정)별 호출 수·토큰·비용. 가격표는 `src/usage.py`의 `PRICES` 한 곳.
+3. **`jobfit cost`와 화면 `/cost`(API `/api/cost`)로 집계한다.** 모델 × 단계(전사·구조화·판정·JEV 판정)별, 공고별 호출 수·토큰·비용. 매칭 화면 오른쪽 위에 총비용을 보여준다. 가격표는 `src/usage.py`의 `PRICES` 한 곳.
 4. 사용량 기록 이전 호출은 **추정**으로 따로 표시한다: 남아 있는 재료(조각 이미지 크기, 전사, 이력서·요건)로 프롬프트를 다시 만들어 토큰을 센다 (이미지는 OpenAI 타일 규칙, 글자는 영문 4자·한글 1.5자당 1토큰).
 
 ## 검토한 대안

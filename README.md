@@ -4,7 +4,7 @@
 
 ```
 ① 수집 (crawler)  →  ② 전처리·구조화 (preprocessing)  →  ③ 스코어링 (scoring)
-     구현됨                 구현됨 (실험·기본값 확정 중)          예정
+     구현됨                     구현됨                       구현됨 (실험 중)
 ```
 
 전체 구조는 [`docs/architecture.md`](docs/architecture.md), 설계 문서·결정 기록은 [`docs/`](docs/README.md)에 있다.
@@ -113,6 +113,23 @@ jobfit evaluate 55162188        # 기본 정답: tests/fixtures/criteria_truth/5
 
 재현율·정밀도·필수 재현율·필수/우대 일치율·유형 일치율과 누락·추가·불일치 요건을 출력한다. 정답 목록은 사람이 이미지를 보고 만든 평가 전용 데이터다.
 
+### 6. 지원자 매칭 — `jobfit match`
+
+```bash
+jobfit match 55189170 55162188        # dataset/candidates의 지원자 전원을 각 공고에 매칭 (교차 평가)
+jobfit match 55189170 --candidates path/to/dir
+jobfit match 55189170 --refresh       # 저장된 결과를 무시하고 다시 (판정은 LLM 캐시 사용)
+```
+
+지원자마다 요건별로 판정(충족 / 부분 / 미충족 / 확인 필요 / 해당 없음)하고, 0~100점으로 랭킹해 `data/results/`에 저장한다. 결과 표의 "의도" 열은 목업의 의도 라벨을 **표시만** 한 것이고(점수 계산은 읽지 않음), 그 아래에 의도 대비 순서·점수 구간·판정 일치율을 출력한다.
+
+### 7. 매칭 근거 보기 — `jobfit result`
+
+```bash
+jobfit result 55189170                             # 랭킹
+jobfit result 55189170 --candidate soil-partial-1  # 요건별 판정 · 이력서 근거 · 기여 점수 · 요약
+```
+
 ### 기타 — `jobfit models`
 
 ```bash
@@ -135,6 +152,12 @@ data/criteria/saramin/{rec_idx}/
   transcript.md        전사 전체 (조각 경계 주석 포함)
   criteria.json        구조화된 공고 조건
 data/cache/llm/        LLM 응답 캐시
+```
+
+```
+data/results/saramin/{rec_idx}/
+  ranking.json      랭킹 + 지원자별·분야별 점수 + 요건별 판정·근거 인용·기여 점수
+dataset/candidates/ 목업 지원자 12명 (레포에 포함, 이력서 전처리 결과 형식 — dataset/README.md)
 ```
 
 - 스냅샷은 다음 단계(전처리)의 입력이다. 전처리는 사람인을 다시 요청하지 않는다 ([ADR-0005](docs/adr/0005-origin-snapshot.md)).
@@ -171,7 +194,7 @@ pytest
 
 ```
 src/
-  cli.py              jobfit 명령 (crawl, postings, extract, criteria, evaluate, models)
+  cli.py              jobfit 명령 (crawl, postings, extract, criteria, evaluate, match, result, models)
   settings.py         환경변수 설정
   llm.py              LLM 프로토콜, OpenAI 구현, 응답 캐시
   crawler/
@@ -187,6 +210,16 @@ src/
     criteria.py       PostingCriteria 모델과 저장
     evaluate.py       정답 대비 평가
     service.py        전처리 서비스 (CLI·API 공용)
+  scoring/
+    candidate.py      지원자 모델·줄 번호 렌더링
+    judge.py          요건별 판정 (LLM)
+    verify.py         판정 인용 검증·규칙 보정
+    rules.py          학력 서열·경력 연수
+    score.py          점수 집계·기여도·요약 (순수 함수)
+    result.py         결과 모델과 저장
+    evaluate.py       목업 의도 대비 평가
+    service.py        매칭 서비스 (CLI·API 공용)
+dataset/candidates/   목업 지원자 12명
 tests/
 docs/
   architecture.md     전체 구조

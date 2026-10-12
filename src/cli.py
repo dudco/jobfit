@@ -6,12 +6,17 @@ from typing import List, Optional
 
 import typer
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 from crawler.saramin import parse_rec_idx
 from llm import CachedLLM, OpenAILLM
 from preprocessing import service as preprocessing_service
 from preprocessing.criteria import criteria_dir, load_criteria
+from scoring import service as scoring_service
+from scoring.candidate import load_candidates
+from scoring.evaluate import evaluate_ranking
+from scoring.result import load_result
 from crawler import service
 from crawler.snapshot import list_snapshots
 from settings import ROOT, load_settings
@@ -131,3 +136,83 @@ def evaluate(
     for t, r in ev.matched:
         if t.priority != r.priority or t.category != r.category:
             console.print(f"  불일치: {r.id} {r.text} — 정답 {t.priority}/{t.category}, 추출 {r.priority}/{r.category}")
+
+
+# --- ③ 스코어링 (스펙 03) ---
+
+CANDIDATES_DIR = ROOT / "dataset" / "candidates"
+STATUS_TEXT = {"met": "[green]충족[/green]", "partial": "[yellow]부분[/yellow]", "unmet": "[red]미충족[/red]",
+               "unknown": "[cyan]확인 필요[/cyan]", "not_applicable": "[dim]해당 없음[/dim]"}
+
+
+def _print_ranking(result, candidates) -> None:
+    """랭킹 표. 의도 라벨은 목업 meta에서 표시만 한다 (점수 계산은 meta를 읽지 않음)."""
+    posting_id = result.posting.posting_id
+    labels = {c.id: (c.meta.label if c.meta and c.meta.target_posting == posting_id else "(타 공고)")
+              for c in candidates}
+    table = Table("순위", "점수", "지원자", "분야", "필수 충족", "확인 필요", "의도",
+                  title=f"{escape(result.posting.title)} ({posting_id})")
+    for s in result.candidates:
+        best = s.best
+        table.add_row(str(s.rank), str(s.score), escape(f"{s.candidate_id} {s.name}"), escape(s.position or "—"),
+                      f"{best.must_met}/{best.must_total}", str(len(best.unknown)), labels.get(s.candidate_id, ""))
+    console.print(table)
+    if any(label != "(타 공고)" for label in labels.values()):
+        ev = evaluate_ranking(result, candidates)
+        console.print(f"의도 순서 {'✓' if ev.order_ok else '✗'} · 구간 이탈 {len(ev.out_of_range)} · "
+                      f"의도 판정 일치 {ev.agreed}/{ev.expected_total}")
+        for line in ev.out_of_range + ev.disagreements:
+            console.print(f"  [yellow]{escape(line)}[/yellow]")
+
+
+@app.command("match")
+def match_cmd(
+    refs: List[str] = typer.Argument(..., help="사람인 공고 URL 또는 rec_idx (여러 개 가능)"),
+    candidates: Path = typer.Option(CANDIDATES_DIR, "--candidates", help="지원자 JSON 디렉터리"),
+    refresh: bool = typer.Option(False, "--refresh", help="기존 결과를 무시하고 다시 (판정은 캐시 사용)"),
+):
+    """지원자를 공고 조건으로 판정·점수화하고 랭킹을 data/results/에 저장."""
+    settings = load_settings()
+    llm = make_llm(settings)
+    people = load_candidates(candidates)
+    for ref in refs:
+        result = scoring_service.match(ref, settings, llm=llm, candidates_dir=candidates, refresh=refresh, log=_log)
+        _print_ranking(result, people)
+
+
+@app.command()
+def result(
+    ref: str = typer.Argument(..., help="rec_idx 또는 URL"),
+    candidate: Optional[str] = typer.Option(None, "--candidate", help="지원자 id — 요건별 판정·근거·기여 점수"),
+    candidates: Path = typer.Option(CANDIDATES_DIR, "--candidates", help="지원자 JSON 디렉터리 (의도 라벨 표시용)"),
+):
+    """저장된 매칭 결과. --candidate로 요건별 근거를 본다."""
+    settings = load_settings()
+    posting_id = parse_rec_idx(ref)
+    res = load_result(settings.data_dir, "saramin", posting_id)
+    if res is None:
+        console.print(f"[red]매칭 결과가 없습니다 — 먼저 `jobfit match {posting_id}`를 실행하세요[/red]")
+        raise typer.Exit(1)
+    if candidate is None:
+        _print_ranking(res, load_candidates(candidates))
+        return
+    s = next((x for x in res.candidates if x.candidate_id == candidate), None)
+    if s is None:
+        console.print(f"[red]지원자 {escape(candidate)} 없음[/red]")
+        raise typer.Exit(1)
+    console.print(f"[bold]{s.rank}위 {escape(s.candidate_id)} {escape(s.name)} — {s.score}점[/bold]  "
+                  f"분야: {escape(s.position or '—')}")
+    if len(s.positions) > 1:
+        console.print("분야별: " + ", ".join(f"{escape(p.position or '—')} {p.score}" for p in s.positions))
+    table = Table("요건", "구분", "판정", "근거 (이력서)", "사유", "기여")
+    for j in s.best.judgments:
+        rule = f" [dim]({j.rule})[/dim]" if j.rule else ""
+        flag = f" [red]⚑ {escape(', '.join(j.flags))}[/red]" if j.flags else ""
+        table.add_row(escape(j.text), "필수" if j.priority == "must" else "우대", STATUS_TEXT[j.status] + rule + flag,
+                      escape("\n".join(j.quotes)) or "—", escape(j.reason), f"{j.contribution:.1f}")
+    console.print(table)
+    for line in s.summary:
+        console.print(f"· {escape(line)}")
+    if s.excluded_sensitive:
+        console.print("[dim]법정 우대 — 점수 미반영 (관계 법령·증빙에 따라 전형에서 별도 적용): "
+                      + escape(", ".join(s.excluded_sensitive)) + "[/dim]")

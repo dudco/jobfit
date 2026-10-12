@@ -106,3 +106,58 @@ def test_evaluate_command_prints_metrics(monkeypatch, tmp_path):
     assert result.exit_code == 0, result.output
     assert "재현율 50%" in result.output and "정밀도 50%" in result.output
     assert "누락: 인근거주자" in result.output and "추가: r2 보훈" in result.output
+
+
+# --- 스코어링 (스펙 03) ---
+
+def _write_candidate(directory, cid="c1", label="perfect"):
+    directory.mkdir(exist_ok=True)
+    (directory / f"{cid}.json").write_text(
+        '{"id": "%s", "name": "김", "meta": {"target_posting": "55", "label": "%s"}}' % (cid, label),
+        encoding="utf-8")
+    return directory
+
+
+def test_match_command_calls_service_and_prints_ranking_with_labels(monkeypatch, tmp_path):
+    from scoring import service as scoring_service
+
+    from .test_result import sample
+
+    monkeypatch.setenv("JOBFIT_DATA_DIR", str(tmp_path))
+    d = _write_candidate(tmp_path / "cands")
+    seen = []
+
+    def fake_match(ref, settings, *, llm, candidates_dir, refresh, log):
+        seen.append((ref, candidates_dir, refresh, type(llm).__name__))
+        return sample()
+
+    monkeypatch.setattr(scoring_service, "match", fake_match)
+    result = CliRunner().invoke(cli.app, ["match", "55", "--candidates", str(d), "--refresh"])
+    assert result.exit_code == 0, result.output
+    assert seen == [("55", d, True, "CachedLLM")]
+    for text in ("c1", "70", "perfect", "의도 순서"):
+        assert text in result.output
+
+
+def test_result_command_shows_requirement_evidence(monkeypatch, tmp_path):
+    from scoring.result import save_result
+
+    from .test_result import sample
+
+    monkeypatch.setenv("JOBFIT_DATA_DIR", str(tmp_path))
+    save_result(tmp_path, sample())
+    d = _write_candidate(tmp_path / "cands")
+    result = CliRunner(env={"COLUMNS": "200"}).invoke(
+        cli.app, ["result", "55", "--candidate", "c1", "--candidates", str(d)])
+    assert result.exit_code == 0, result.output
+    for text in ("1위 c1", "70점", "고졸 이상", "충족", "[학력] 고등학교", "70.0", "필수 1개 중 1개 충족", "보훈 우대"):
+        assert text in result.output
+    ranking = CliRunner().invoke(cli.app, ["result", "55", "--candidates", str(d)])
+    assert ranking.exit_code == 0 and "c1" in ranking.output
+
+
+def test_result_command_without_result_exits_1(monkeypatch, tmp_path):
+    monkeypatch.setenv("JOBFIT_DATA_DIR", str(tmp_path))
+    result = CliRunner().invoke(cli.app, ["result", "55"])
+    assert result.exit_code == 1
+    assert "jobfit match 55" in result.output

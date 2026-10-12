@@ -1109,7 +1109,7 @@ git commit -m "test(crawler): 실제 사람인 상세 HTML로 사이트 가정(H
 - Create: `data/postings/saramin/<A>/…`, `data/postings/saramin/<B>/…` (로컬 전용, [ADR-0007](../adr/0007-data-not-versioned.md))
 - Modify: 스펙 9장, `docs/README.md`
 
-- [x] **Step 1: 공고 B 고르기** (55189170 — 단, 직군 재검토 중: 스펙 9장 "열린 문제")
+- [x] **Step 1: 공고 B 고르기** (최종: A=55189170 S-OIL 사무직, B=55162188 오리온 생산직 — [ADR-0009](../adr/0009-evaluation-postings.md))
 
 A와 **다른 직군**의 이미지형 공고 (권장: 현장·기술직 — 생산, 품질, 물류 등).
 
@@ -1146,7 +1146,7 @@ PY
 
 "전처리 스펙에 넘길 사항"에 적을 것: 이미지 최대 세로 길이와 가로 대비 비율(슬라이싱 필요 여부), 공고당 이미지 장수, 형식(GIF·투명 PNG 여부).
 
-- [ ] **Step 5: 상태 갱신과 커밋** — 대기: 공고 선정 결정 후 (스펙 01 9장 "열린 문제")
+- [x] **Step 5: 상태 갱신과 커밋**
 
 - 스펙 01 상태 → `완료`, 수용 기준 체크
 - `docs/README.md` 진행 현황 01 → 완료

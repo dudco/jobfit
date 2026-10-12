@@ -220,3 +220,22 @@ def test_old_results_are_recomputed_after_scoring_changes(tmp_path):
     llm = FakeLLM(structured=[by_declaration])
     match("55", settings(tmp_path), llm=llm, candidates_dir=d, log=quiet)
     assert llm.calls
+
+
+def test_position_tie_is_broken_by_stronger_judgments_without_changing_score(tmp_path):
+    """부분 충족과 확인 필요는 같은 0.5점이라 점수가 같다 — 대표 분야는 판정이 더 강한(충족 > 부분) 분야로 고른다."""
+    write_criteria(tmp_path, make_criteria(COMMON_ONLY, positions=["재무", "실험"]))
+    d = write_candidates(tmp_path, person("a", ["야간근무 가능"]))
+
+    def fit_partial_on_second(user):
+        out = by_declaration(user)
+        out.judgments += [
+            LLMJudgment(requirement_id="p1", status="unknown", quotes=[], reason="r", relevant_experience=[]),
+            LLMJudgment(requirement_id="p2", status="partial", quotes=["[자기 신고] 야간근무 가능"], reason="r",
+                        relevant_experience=[])]
+        return out
+
+    a = match("55", settings(tmp_path), llm=FakeLLM(structured=[fit_partial_on_second]), candidates_dir=d,
+              log=quiet).candidates[0]
+    assert [p.score for p in a.positions] == [85, 85]
+    assert (a.position, a.score, a.tied_positions) == ("실험", 85, False)

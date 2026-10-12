@@ -73,8 +73,13 @@ def score_candidate(llm: LLM, criteria: PostingCriteria, candidate: Candidate, *
 
 
 def _pick(candidate_id: str, name: str, per_position: list, excluded: list[str]) -> CandidateScore:
-    best = max(per_position, key=lambda ps: ps.raw)                   # 동점이면 먼저 평가한 분야
-    tied = len(per_position) > 1 and all(abs(ps.raw - best.raw) < 1e-9 for ps in per_position)
+    def strength(ps):
+        """점수가 같으면 판정이 더 강한 분야 (충족 수, 부분 수) — 부분과 확인 필요가 같은 점수라 생기는 동점을 가른다."""
+        counted = [j for j in ps.judgments if j.credit is not None]
+        return (round(ps.raw, 9), sum(j.status == "met" for j in counted), sum(j.status == "partial" for j in counted))
+
+    best = max(per_position, key=strength)                            # 그래도 같으면 먼저 평가한 분야
+    tied = len(per_position) > 1 and all(strength(ps) == strength(best) for ps in per_position)
     return CandidateScore(rank=0, candidate_id=candidate_id, name=name, score=best.score, raw=best.raw,
                           position=best.position, positions=per_position, summary=summarize(best, excluded),
                           excluded_sensitive=excluded, tied_positions=tied)

@@ -95,3 +95,19 @@ def test_empty_string_response_is_cached(tmp_path):
     assert cached.vision_text(model="m", system="s", image=img) == ""
     assert cached.vision_text(model="m", system="s", image=img) == ""
     assert len(inner.calls) == 1
+
+
+def test_cache_key_uses_pixels_not_encoded_bytes(tmp_path):
+    """같은 그림을 다른 압축으로 저장해도(다른 OS·Pillow 버전) 캐시가 적중해야 한다."""
+    from PIL import Image
+
+    img = Image.new("RGB", (50, 50), "white")
+    a, b = tmp_path / "a.png", tmp_path / "b.png"
+    img.save(a, compress_level=1)
+    img.save(b, compress_level=9)
+    assert a.read_bytes() != b.read_bytes()
+    inner = FakeLLM(vision=["x"])
+    cached = CachedLLM(lambda: inner, tmp_path / "cache")
+    cached.vision_text(model="m", system="s", image=a)
+    cached.vision_text(model="m", system="s", image=b)
+    assert len(inner.calls) == 1

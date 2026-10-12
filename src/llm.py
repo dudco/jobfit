@@ -66,6 +66,20 @@ class OpenAILLM:
         return sorted(m.id for m in self.client.models.list())
 
 
+def _image_digest(path: Path) -> str:
+    """이미지 픽셀의 해시. 같은 그림이면 PNG 인코딩(OS·Pillow 버전)이 달라도 같은 값.
+    디코딩할 수 없는 파일은 바이트 해시로 대신한다."""
+    try:
+        from PIL import Image
+
+        with Image.open(path) as im:
+            im.load()
+            header = f"{im.mode}:{im.size}".encode()
+            return hashlib.sha256(header + im.tobytes()).hexdigest()
+    except Exception:
+        return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 def _hash(payload: dict) -> str:
     return hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
 
@@ -87,7 +101,7 @@ class CachedLLM:
     def vision_text(self, *, model: str, system: str, image: Path,
                     user_text: Optional[str] = None, tag: str = "") -> str:
         key = _hash({"kind": "vision", "model": model, "system": system, "user_text": user_text,
-                     "image": hashlib.sha256(image.read_bytes()).hexdigest()})
+                     "image": _image_digest(image)})
         found, value = self._load(tag, key)
         if found:
             return value

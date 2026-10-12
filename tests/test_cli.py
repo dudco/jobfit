@@ -207,3 +207,10 @@ def test_service_errors_are_shown_as_messages_not_tracebacks(monkeypatch, tmp_pa
     result = CliRunner().invoke(cli.app, ["run", "55226797"])
     assert result.exit_code == 1
     assert "이미지 공고가 아님" in result.output and "Traceback" not in result.output
+
+
+def test_criteria_command_explains_flags_in_korean(monkeypatch, tmp_path):
+    monkeypatch.setenv("JOBFIT_DATA_DIR", str(tmp_path))
+    save_criteria(criteria_dir(tmp_path, "saramin", "55"), sample_criteria())
+    result = CliRunner(env={"COLUMNS": "200"}).invoke(cli.app, ["criteria", "55"])
+    assert "⚑ 근거 인용 없음" in result.output and "원문(공고 전사 또는 이력서)에서 찾지 못했다" in result.output

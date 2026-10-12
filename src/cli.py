@@ -12,6 +12,7 @@ from rich.markup import escape
 from rich.table import Table
 
 import pipeline
+from flags import describe
 from crawler.saramin import parse_rec_idx
 from llm import CachedLLM, OpenAILLM, cached_openai
 from preprocessing import service as preprocessing_service
@@ -38,6 +39,14 @@ def _friendly(fn):
             console.print(f"[red]{escape(str(e))}[/red]")
             raise typer.Exit(1)
     return wrapper
+
+
+def _flag_legend(codes) -> None:
+    """표에 나온 검증 표시의 뜻을 표 아래에 한 번씩 풀어 쓴다."""
+    for code in dict.fromkeys(codes):
+        info = describe(code)
+        color = "yellow" if info.severity == "warning" else "dim"
+        console.print(f"[{color}]⚑ {info.label}[/] — {info.explanation}")
 
 
 def _log(msg: str) -> None:
@@ -107,7 +116,10 @@ def criteria(ref: str = typer.Argument(..., help="rec_idx 또는 URL")):
     for r in c.requirements:
         where = (f"img{r.evidence.image_index}/slice{r.evidence.slice_index}"
                  if r.evidence.slice_index is not None else "✗ 없음")
-        kind = ("필수" if r.priority == "must" else "우대") + (" ⚑" if r.sensitive else "")
+        kind = ("필수" if r.priority == "must" else "우대") + (" (법정)" if r.sensitive else "")
+        if r.flags:
+            where += "".join(f"\n[{'yellow' if describe(f).severity == 'warning' else 'dim'}]⚑ {describe(f).label}[/]"
+                             for f in r.flags)
         table.add_row(r.id, kind, r.category, r.text, ", ".join(r.positions) or "전체", where)
     console.print(table)
     if c.positions:
@@ -116,6 +128,7 @@ def criteria(ref: str = typer.Argument(..., help="rec_idx 또는 URL")):
     parts = [x for x in [cond.employment_type, cond.schedule, *cond.locations, *cond.others] if x]
     if parts:
         console.print("근무조건(점수 미반영): " + " · ".join(parts))
+    _flag_legend(f for r in c.requirements for f in r.flags)
     for warning in c.warnings:
         console.print(f"[yellow]⚠ {warning}[/yellow]")
 
@@ -254,10 +267,11 @@ def result(
     table = Table("요건", "구분", "판정", "근거 (이력서)", "사유", "기여")
     for j in s.best.judgments:
         rule = f" [dim]({j.rule})[/dim]" if j.rule else ""
-        flag = f" [red]⚑ {escape(', '.join(j.flags))}[/red]" if j.flags else ""
+        flag = "".join(f"\n[yellow]⚑ {describe(f).label}[/yellow]" for f in j.flags)
         table.add_row(escape(j.text), "필수" if j.priority == "must" else "우대", STATUS_TEXT[j.status] + rule + flag,
                       escape("\n".join(j.quotes)) or "—", escape(j.reason), f"{j.contribution:.1f}")
     console.print(table)
+    _flag_legend(f for j in s.best.judgments for f in j.flags)
     for line in s.summary:
         console.print(f"· {escape(line)}")
     if s.excluded_sensitive:

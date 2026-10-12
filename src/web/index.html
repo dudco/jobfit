@@ -38,7 +38,7 @@
   ul.reqs li { padding: 6px 0; border-bottom: 1px dashed var(--line); display: flex; gap: 8px; align-items: flex-start; }
   ul.reqs li .t { flex: 1; }
   .chip { display: inline-block; font-size: 11px; padding: 0 6px; border-radius: 10px; background: var(--na-bg);
-          color: var(--muted); margin: 2px 4px 0 0; white-space: nowrap; }
+          color: var(--muted); margin: 2px 4px 0 0; max-width: 100%; overflow-wrap: anywhere; }
   .chip.must { background: #ffeff0; color: var(--unmet); }
   .chip.pref { background: #eef4ff; color: var(--accent); }
   .linkish { border: none; background: none; color: var(--accent); padding: 0; font-size: 12px; cursor: pointer; white-space: nowrap; }
@@ -68,7 +68,14 @@
   .summary { margin: 8px 0 0; padding-left: 18px; }
   .quote { font-size: 13px; color: #3b4148; background: #f6f8fa; border-left: 3px solid var(--line); padding: 2px 6px; margin: 2px 0; }
   .contrib { font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .flag { color: var(--unmet); font-size: 11px; }
+  .flag { display: inline-block; font-size: 11px; font-weight: 600; padding: 0 6px; border-radius: 4px; margin: 2px 4px 0 0; cursor: help; }
+  .flag.warning { color: #7d4e00; background: #fff1c2; border: 1px solid #e0b300; }
+  .flag.info { color: var(--muted); background: var(--na-bg); }
+  .notice { margin: 8px 0; padding: 8px 10px; border-radius: 6px; background: #fff8e1; border: 1px solid #f0d27a; font-size: 13px; }
+  .notice b { color: #7d4e00; }
+  .notice .linkish { font-size: 13px; }
+  .legend { margin-top: 8px; font-size: 12px; color: var(--muted); }
+  .legend div { margin-top: 2px; }
   ol.resume { margin: 0; padding-left: 32px; font-size: 13px; }
   ol.resume li { padding: 1px 4px; border-radius: 3px; }
   ol.resume li.hit { background: #fff1c2; }
@@ -107,6 +114,18 @@ const WEIGHTS = [
   ["must_share", "필수 비중", 0, 1, 0.05], ["gate", "필수 미충족 1개당 곱", 0.5, 1, 0.05],
   ["partial", "부분 충족 점수", 0, 1, 0.05], ["unknown", "확인 필요 점수", 0, 1, 0.05],
 ];
+let FLAGS = {};
+const flagInfo = (code) => FLAGS[code] || { label: code, explanation: code, severity: "warning" };
+/** 검증 표시 배지: 한국어 이름 + 마우스를 올리면 뜻 */
+const flagBadge = (code) => {
+  const f = flagInfo(code);
+  return el("span", { class: "flag " + f.severity, title: f.explanation }, "⚑ " + f.label);
+};
+/** 화면에 나온 표시들의 뜻을 한 번씩 풀어 쓴다 */
+function flagLegend(codes) {
+  const uniq = [...new Set(codes)];
+  return uniq.length ? el("div", { class: "legend" }, uniq.map((c) => el("div", {}, flagBadge(c), " ", flagInfo(c).explanation))) : null;
+}
 const state = { postings: [], current: null, criteria: null, saved: null, result: null, candidates: {},
                 selected: null, showLabels: false };
 
@@ -183,15 +202,18 @@ function renderCriteria() {
     el("div", { class: "t" }, r.text, el("div", {},
       el("span", { class: "chip" }, CATEGORY[r.category] || r.category),
       el("span", { class: "chip" }, r.positions.length ? r.positions.join(", ") : "전체 분야"),
-      r.flags.length ? el("span", { class: "flag" }, "⚑ " + r.flags.join(", ")) : null)),
+      r.flags.map(flagBadge))),
     el("button", { class: "linkish", onclick: () => showEvidence(r) }, "원본"));
   const scored = c.requirements.filter((r) => !r.sensitive);
+  const flagged = c.requirements.filter((r) => r.flags.some((f) => flagInfo(f).severity === "warning"));
   const group = (title, items) => items.length ? [el("h3", {}, title), el("ul", { class: "reqs" }, items.map(reqItem))] : [];
   const cond = c.conditions;
   const condLines = [cond.employment_type, cond.schedule, ...cond.locations, ...cond.others].filter(Boolean);
   fill($("#criteria"), 
     el("h2", {}, c.title),
     el("div", { class: "sub" }, [c.company, c.job_family, `rec_idx ${c.source.posting_id}`].filter(Boolean).join(" · ")),
+    flagged.length ? el("div", { class: "notice" }, el("b", {}, `⚑ 검증 표시 ${flagged.length}건`),
+      " — 원본과 대조가 필요한 요건: ", flagged.map((r) => r.id).join(", ")) : null,
     c.positions.length > 1 ? [el("h3", {}, `모집분야 ${c.positions.length}`),
       el("div", {}, c.positions.map((p) => el("span", { class: "chip", title: p.duties || "" }, p.name)))] : null,
     group(`필수 ${scored.filter((r) => r.priority === "must").length}`, scored.filter((r) => r.priority === "must")),
@@ -199,6 +221,7 @@ function renderCriteria() {
     group("법정 우대 — 점수 미반영 (관계 법령·증빙에 따라 전형에서 적용)", c.requirements.filter((r) => r.sensitive)),
     condLines.length ? [el("h3", {}, "근무조건 (참고 — 점수 미반영)"), el("ul", { class: "reqs" }, condLines.map((t) => el("li", {}, t)))] : null,
     c.warnings.length ? [el("h3", {}, "추출 경고"), c.warnings.map((w) => el("div", { class: "warn" }, "⚠ " + w))] : null,
+    flagLegend(c.requirements.flatMap((r) => r.flags)),
     el("p", { class: "sub" }, `조건 추출 ${c.extracted_at.slice(0, 16).replace("T", " ")} · 이미지에서만 추출`),
   );
 }
@@ -239,6 +262,8 @@ async function renderRanking() {
     return;
   }
   await ensureCandidates();
+  const flaggedPeople = r.candidates.filter((s) => s.positions.find((p) => p.position === s.position)
+    .judgments.some((j) => j.flags.some((f) => flagInfo(f).severity === "warning")));
   const rows = r.candidates.map((s) => {
     const best = s.positions.find((p) => p.position === s.position);
     const label = state.showLabels ? labelOf(s.candidate_id) : null;
@@ -247,7 +272,8 @@ async function renderRanking() {
       el("td", {}, s.rank),
       el("td", {}, el("span", { class: "score" }, s.score),
         el("span", { class: "bar track" }, el("span", { style: `width:${Math.max(0, Math.min(100, s.score))}%` }))),
-      el("td", {}, s.name, " ", el("span", { class: "sub" }, s.candidate_id), label ? [" ", el("span", { class: "label" }, label)] : null),
+      el("td", {}, s.name, " ", el("span", { class: "sub" }, s.candidate_id), label ? [" ", el("span", { class: "label" }, label)] : null,
+        flaggedPeople.includes(s) ? [" ", el("span", { class: "flag warning", title: "판정 검증 표시가 있음" }, "⚑")] : null),
       el("td", {}, s.position || "—"),
       el("td", {}, `${best.must_met}/${best.must_total}`),
       el("td", {}, best.unknown.length ? el("span", { class: "badge s-unknown" }, best.unknown.length) : "0"));
@@ -262,6 +288,9 @@ async function renderRanking() {
         el("label", { class: "sub" }, el("input", { type: "checkbox", checked: state.showLabels,
           onchange: (e) => { state.showLabels = e.target.checked; renderRanking(); } }), " 평가용 의도 라벨 표시"),
         " ", el("button", { onclick: () => runMatch(true), title: "판정은 캐시를 사용" }, "다시 매칭"))),
+    flaggedPeople.length ? el("div", { class: "notice" }, el("b", {}, `⚑ 판정 검증 표시 — 지원자 ${flaggedPeople.length}명`),
+      " (근거를 확인할 것): ", flaggedPeople.map((s, i) => [i ? ", " : "", el("button", { class: "linkish",
+        onclick: () => { state.selected = s.candidate_id; renderRanking(); renderDetail(); } }, s.name)])) : null,
     el("table", {}, el("thead", {}, el("tr", {}, ["순위", "점수", "지원자", "분야", "필수 충족", "확인 필요"].map((h) => el("th", {}, h)))),
       el("tbody", {}, rows)),
     renderWeights(r.weights),
@@ -309,7 +338,7 @@ function renderDetail() {
       el("span", { class: "chip" }, CATEGORY[j.category] || j.category))),
     el("td", {}, el("span", { class: "badge s-" + j.status }, STATUS[j.status]),
       j.rule ? el("div", { class: "sub" }, j.rule === "education_level" ? "학력 규칙" : "경력 규칙") : null,
-      j.flags.length ? el("div", { class: "flag" }, "⚑ " + j.flags.join(", ")) : null),
+      j.flags.length ? el("div", {}, j.flags.map(flagBadge)) : null),
     el("td", {}, j.quotes.length ? j.quotes.map((q) => el("div", { class: "quote" }, q)) : el("span", { class: "sub" }, "—"),
       el("div", { class: "sub" }, j.reason)),
     el("td", { class: "contrib" }, j.credit === null ? "—" : j.contribution.toFixed(1))));
@@ -321,6 +350,7 @@ function renderDetail() {
     el("ul", { class: "summary" }, s.summary.map((line) => el("li", {}, line))),
     el("table", {}, el("thead", {}, el("tr", {}, ["요건", "판정", "근거 (이력서)", "기여"].map((h) => el("th", {}, h)))),
       el("tbody", {}, rows)),
+    flagLegend(best.judgments.flatMap((j) => j.flags)),
     s.excluded_sensitive.length
       ? el("p", { class: "sub" }, "법정 우대 — 점수 미반영: " + s.excluded_sensitive.join(", ")) : null,
     cand ? [el("h3", {}, "이력서 (판정에 쓰인 원문, 인용된 줄 강조)"),
@@ -356,7 +386,8 @@ $("#run-form").addEventListener("submit", (e) => {
   });
 });
 
-loadPostings().catch((e) => setStatus(e.message, true));
+api("/api/flags").then((f) => { FLAGS = f; }).catch(() => {})
+  .then(() => loadPostings()).catch((e) => setStatus(e.message, true));
 </script>
 </body>
 </html>

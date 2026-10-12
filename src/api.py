@@ -14,6 +14,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel
 
 import pipeline
+from flags import FLAGS
 from crawler.saramin import parse_rec_idx
 from crawler.service import SITE
 from llm import LLM, cached_openai
@@ -143,6 +144,12 @@ def create_app(settings: Optional[Settings] = None, llm: Optional[LLM] = None) -
                               target_posting=c.meta.target_posting if c.meta else None,
                               label=c.meta.label if c.meta else None)
                 for c in load_candidates(settings.candidates_dir)]
+
+    @app.get("/api/flags")
+    def flags():
+        """검증 표시 코드의 뜻 (UI 설명용)."""
+        return {code: {"label": f.label, "explanation": f.explanation, "severity": f.severity}
+                for code, f in FLAGS.items()}
 
     @app.get("/", include_in_schema=False)
     def index():

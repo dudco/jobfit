@@ -88,3 +88,9 @@ def test_index_page_served(tmp_path):
     c, _ = client_for(tmp_path)
     r = c.get("/")
     assert r.status_code == 200 and "jobfit" in r.text
+
+
+def test_flags_endpoint_explains_codes(tmp_path):
+    c, _ = client_for(tmp_path)
+    flags = c.get("/api/flags").json()
+    assert flags["quote_not_found"]["label"] == "근거 인용 없음" and flags["quote_spliced"]["severity"] == "info"

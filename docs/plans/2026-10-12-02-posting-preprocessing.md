@@ -37,7 +37,7 @@
 - Modify: `pyproject.toml` (의존성), `src/settings.py` (전체 교체), `.env.example`
 - Test: `tests/test_settings.py`
 
-- [ ] **Step 1: 의존성 추가**
+- [x] **Step 1: 의존성 추가**
 
 `pyproject.toml`의 `dependencies`에 추가:
 
@@ -50,7 +50,7 @@
 uv pip install -e ".[dev]"
 ```
 
-- [ ] **Step 2: 실패하는 테스트 추가**
+- [x] **Step 2: 실패하는 테스트 추가**
 
 `tests/test_settings.py`에 추가:
 
@@ -77,12 +77,12 @@ def test_preprocessing_defaults(monkeypatch, tmp_path):
     assert s.llm_cache_dir == tmp_path / "cache" / "llm"
 ```
 
-- [ ] **Step 3: 실패 확인**
+- [x] **Step 3: 실패 확인**
 
 Run: `pytest tests/test_settings.py -v`
 Expected: FAIL — `TypeError: load_settings() got an unexpected keyword argument 'dotenv_path'`
 
-- [ ] **Step 4: 구현**
+- [x] **Step 4: 구현**
 
 `src/settings.py` 전체:
 
@@ -148,12 +148,12 @@ OPENAI_API_KEY=
 # JOBFIT_MAX_WIDTH=1000
 ```
 
-- [ ] **Step 5: 통과 확인**
+- [x] **Step 5: 통과 확인**
 
 Run: `pytest tests/test_settings.py -v`
 Expected: 4 passed
 
-- [ ] **Step 6: 커밋**
+- [x] **Step 6: 커밋**
 
 ```bash
 git add pyproject.toml .env.example src/settings.py tests/test_settings.py
@@ -168,7 +168,7 @@ git commit -m "feat(settings): 전처리 설정(모델·분할 높이·폭)과 o
 - Create: `src/preprocessing/__init__.py` (빈 파일), `src/preprocessing/images.py`
 - Test: `tests/test_preprocessing_images.py`
 
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [x] **Step 1: 실패하는 테스트 작성**
 
 ```python
 from PIL import Image, ImageDraw, ImageStat
@@ -195,12 +195,12 @@ def test_animated_gif_uses_first_frame(tmp_path):
     assert out.getpixel((5, 5)) == (255, 0, 0)
 ```
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run: `pytest tests/test_preprocessing_images.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'preprocessing'`
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/preprocessing/images.py`:
 
@@ -229,12 +229,12 @@ def normalize(img: Image.Image) -> Image.Image:
     return img.convert("RGB")
 ```
 
-- [ ] **Step 4: 통과 확인**
+- [x] **Step 4: 통과 확인**
 
 Run: `pytest tests/test_preprocessing_images.py -v`
 Expected: 2 passed
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add src/preprocessing tests/test_preprocessing_images.py
@@ -251,7 +251,7 @@ git commit -m "feat(preprocessing): 이미지 정규화 (투명 배경 흰색 �
 - Modify: `src/preprocessing/images.py`
 - Test: `tests/test_preprocessing_images.py`
 
-- [ ] **Step 1: 실패하는 테스트 추가**
+- [x] **Step 1: 실패하는 테스트 추가**
 
 ```python
 import pytest
@@ -327,12 +327,12 @@ def test_wide_image_is_scaled_and_blank_slices_are_dropped():
     assert len(pieces) == 1                                     # 아래쪽 빈 조각은 버림
 ```
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run: `pytest tests/test_preprocessing_images.py -v`
 Expected: FAIL — `ImportError: cannot import name 'INK_THRESHOLD'`
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/preprocessing/images.py`에 추가:
 
@@ -423,12 +423,12 @@ def slice_image(img: Image.Image, *, max_width: int = 1000, target_height: int =
     return pieces
 ```
 
-- [ ] **Step 4: 통과 확인**
+- [x] **Step 4: 통과 확인**
 
 Run: `pytest tests/test_preprocessing_images.py -v`
 Expected: 9 passed
 
-- [ ] **Step 5: 실제 이미지로 확인 [수동]**
+- [x] **Step 5: 실제 이미지로 확인 [수동]**
 
 ```bash
 python - <<'PY'
@@ -443,7 +443,7 @@ PY
 ```
 Expected (계획 작성 시 확인 값): `55189170 (860, 3170) [(0, 916), (916, 1955), (1955, 2983), (2983, 3170)]`, `55162188 (720, 1890) [(0, 950), (950, 1890)]` — 모두 글자 줄 사이
 
-- [ ] **Step 6: 커밋**
+- [x] **Step 6: 커밋**
 
 ```bash
 git add src/preprocessing/images.py tests/test_preprocessing_images.py
@@ -458,7 +458,7 @@ git commit -m "feat(preprocessing): 잉크량 기반 여백 분할 (여백 없�
 - Create: `src/llm.py`, `tests/fakes.py`
 - Test: `tests/test_llm.py`
 
-- [ ] **Step 1: 테스트 대역 작성**
+- [x] **Step 1: 테스트 대역 작성**
 
 `tests/fakes.py`:
 
@@ -490,7 +490,7 @@ class FakeLLM:
         return resp(user) if callable(resp) else resp
 ```
 
-- [ ] **Step 2: 실패하는 테스트 작성**
+- [x] **Step 2: 실패하는 테스트 작성**
 
 `tests/test_llm.py`:
 
@@ -594,12 +594,12 @@ def test_empty_string_response_is_cached(tmp_path):
     assert len(inner.calls) == 1
 ```
 
-- [ ] **Step 3: 실패 확인**
+- [x] **Step 3: 실패 확인**
 
 Run: `pytest tests/test_llm.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'llm'`
 
-- [ ] **Step 4: 구현**
+- [x] **Step 4: 구현**
 
 `src/llm.py`:
 
@@ -729,12 +729,12 @@ class CachedLLM:
         )
 ```
 
-- [ ] **Step 5: 통과 확인**
+- [x] **Step 5: 통과 확인**
 
 Run: `pytest tests/test_llm.py -v`
 Expected: 6 passed
 
-- [ ] **Step 6: 커밋**
+- [x] **Step 6: 커밋**
 
 ```bash
 git add src/llm.py tests/fakes.py tests/test_llm.py
@@ -749,7 +749,7 @@ git commit -m "feat(llm): LLM 프로토콜, OpenAI 구현, 입력 해시 응답 
 - Create: `src/preprocessing/criteria.py`
 - Test: `tests/test_criteria.py`
 
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [x] **Step 1: 실패하는 테스트 작성**
 
 ```python
 import json
@@ -810,12 +810,12 @@ def test_list_criteria_sorted(tmp_path):
     assert list_criteria(tmp_path / "none") == []
 ```
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run: `pytest tests/test_criteria.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'preprocessing.criteria'`
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/preprocessing/criteria.py`:
 
@@ -926,12 +926,12 @@ def list_criteria(data_dir: Path) -> list[PostingCriteria]:
     return [PostingCriteria.model_validate_json(p.read_text(encoding="utf-8")) for p in paths]
 ```
 
-- [ ] **Step 4: 통과 확인**
+- [x] **Step 4: 통과 확인**
 
 Run: `pytest tests/test_criteria.py -v`
 Expected: 4 passed
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add src/preprocessing/criteria.py tests/test_criteria.py
@@ -946,7 +946,7 @@ git commit -m "feat(preprocessing): PostingCriteria 모델과 원자적 저장 (
 - Create: `src/preprocessing/prompts.py`, `src/preprocessing/transcribe.py`
 - Test: `tests/test_transcribe.py`
 
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [x] **Step 1: 실패하는 테스트 작성**
 
 ```python
 from preprocessing.transcribe import SliceRef, slice_at, transcribe
@@ -983,12 +983,12 @@ def test_slice_at_finds_the_slice_containing_an_offset(tmp_path):
     assert slice_at("마커 없음", 0) == (None, None)
 ```
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run: `pytest tests/test_transcribe.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'preprocessing.transcribe'`
 
-- [ ] **Step 3: 프롬프트**
+- [x] **Step 3: 프롬프트**
 
 `src/preprocessing/prompts.py`:
 
@@ -1031,7 +1031,7 @@ title·company·job_family — 이미지에 적힌 공고명·회사명, 직군(
 전사 텍스트에 없는 내용은 만들지 마세요."""
 ```
 
-- [ ] **Step 4: 구현**
+- [x] **Step 4: 구현**
 
 `src/preprocessing/transcribe.py`:
 
@@ -1085,12 +1085,12 @@ def slice_at(transcript: str, offset: int) -> tuple[Optional[int], Optional[int]
     return found
 ```
 
-- [ ] **Step 5: 통과 확인**
+- [x] **Step 5: 통과 확인**
 
 Run: `pytest tests/test_transcribe.py -v`
 Expected: 2 passed
 
-- [ ] **Step 6: 커밋**
+- [x] **Step 6: 커밋**
 
 ```bash
 git add src/preprocessing/prompts.py src/preprocessing/transcribe.py tests/test_transcribe.py
@@ -1105,7 +1105,7 @@ git commit -m "feat(preprocessing): 조각별 비전 전사와 조각 경계 주
 - Create: `src/preprocessing/structure.py`
 - Test: `tests/test_structure.py`
 
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [x] **Step 1: 실패하는 테스트 작성**
 
 ```python
 from openai.lib._pydantic import to_strict_json_schema  # OpenAI strict 스키마 호환성 확인용
@@ -1138,12 +1138,12 @@ def test_llm_output_schema_is_openai_strict_compatible():
     assert schema["additionalProperties"] is False
 ```
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run: `pytest tests/test_structure.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'preprocessing.structure'`
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/preprocessing/structure.py`:
 
@@ -1211,12 +1211,12 @@ def structure(llm: LLM, transcript: str, *, model: str, posting_id: str) -> Stru
     )
 ```
 
-- [ ] **Step 4: 통과 확인**
+- [x] **Step 4: 통과 확인**
 
 Run: `pytest tests/test_structure.py -v`
 Expected: 2 passed
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add src/preprocessing/structure.py tests/test_structure.py
@@ -1231,7 +1231,7 @@ git commit -m "feat(preprocessing): 전사 전체를 한 번에 구조화 (Struc
 - Create: `src/preprocessing/verify.py`
 - Test: `tests/test_verify.py`
 
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [x] **Step 1: 실패하는 테스트 작성**
 
 ```python
 from preprocessing.criteria import CriteriaSource
@@ -1315,12 +1315,12 @@ def test_carries_sensitive_positions_and_conditions():
     assert (c.title, c.company, c.job_family, c.source.posting_id) == ("생산직 채용", "OO", "식품 생산", "55")
 ```
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run: `pytest tests/test_verify.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'preprocessing.verify'`
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/preprocessing/verify.py`:
 
@@ -1408,12 +1408,12 @@ def build_criteria(out: StructuredPosting, transcript: str, *, source: CriteriaS
     )
 ```
 
-- [ ] **Step 4: 통과 확인**
+- [x] **Step 4: 통과 확인**
 
 Run: `pytest tests/test_verify.py -v`
 Expected: 6 passed
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add src/preprocessing/verify.py tests/test_verify.py
@@ -1428,7 +1428,7 @@ git commit -m "feat(preprocessing): 인용 검증·출처 위치·중복 병합�
 - Create: `src/preprocessing/service.py`
 - Test: `tests/test_preprocessing_service.py`
 
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [x] **Step 1: 실패하는 테스트 작성**
 
 ```python
 from io import BytesIO
@@ -1565,12 +1565,12 @@ def test_failure_leaves_no_criteria(tmp_path):
     assert load_criteria(criteria_dir(tmp_path, "saramin", "55")) is None
 ```
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run: `pytest tests/test_preprocessing_service.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'preprocessing.service'`
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/preprocessing/service.py`:
 
@@ -1663,12 +1663,12 @@ def extract(ref: str, settings: Settings, *, llm: LLM, refresh: bool = False, lo
     return criteria
 ```
 
-- [ ] **Step 4: 통과 확인**
+- [x] **Step 4: 통과 확인**
 
 Run: `pytest -q`
 Expected: 전부 PASS (`tests/test_preprocessing_service.py` 8 passed)
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add src/preprocessing/service.py tests/test_preprocessing_service.py
@@ -1683,7 +1683,7 @@ git commit -m "feat(preprocessing): 전처리 서비스 — 이미지만 입력,
 - Modify: `src/cli.py`
 - Test: `tests/test_cli.py`
 
-- [ ] **Step 1: 실패하는 테스트 추가**
+- [x] **Step 1: 실패하는 테스트 추가**
 
 `tests/test_cli.py`에 추가:
 
@@ -1740,12 +1740,12 @@ def test_criteria_command_without_result_exits_1(monkeypatch, tmp_path):
     assert "jobfit extract 55" in result.output
 ```
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run: `pytest tests/test_cli.py -v`
 Expected: FAIL — 새 테스트 3개 (`No such command 'extract'` / `'criteria'`)
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/cli.py` import에 추가 (`from crawler import service` 위):
 
@@ -1816,7 +1816,7 @@ def models():
         console.print(name)
 ```
 
-- [ ] **Step 4: 통과 확인**
+- [x] **Step 4: 통과 확인**
 
 ```bash
 pytest tests/test_cli.py -v
@@ -1824,7 +1824,7 @@ jobfit --help
 ```
 Expected: 5 passed, 도움말에 `extract`, `criteria`, `models`
 
-- [ ] **Step 5: 커밋**
+- [x] **Step 5: 커밋**
 
 ```bash
 git add src/cli.py tests/test_cli.py
@@ -1840,7 +1840,7 @@ git commit -m "feat(cli): jobfit extract / criteria / models"
 - Modify: `src/cli.py`
 - Test: `tests/test_evaluate.py`, `tests/test_cli.py`
 
-- [ ] **Step 1: 실패하는 테스트 작성**
+- [x] **Step 1: 실패하는 테스트 작성**
 
 `tests/test_evaluate.py`:
 
@@ -1914,12 +1914,12 @@ def test_truth_fixtures_are_valid():
         assert any(t.priority == "must" for t in truth.requirements)
 ```
 
-- [ ] **Step 2: 실패 확인**
+- [x] **Step 2: 실패 확인**
 
 Run: `pytest tests/test_evaluate.py -v`
 Expected: FAIL — `ModuleNotFoundError: No module named 'preprocessing.evaluate'`
 
-- [ ] **Step 3: 구현**
+- [x] **Step 3: 구현**
 
 `src/preprocessing/evaluate.py`:
 
@@ -2032,7 +2032,7 @@ def evaluate(truth: Truth, criteria: PostingCriteria, *, threshold: float = MATC
 Run: `pytest tests/test_evaluate.py -v`
 Expected: 4 passed, 1 failed (`test_truth_fixtures_are_valid` — 정답 파일 없음)
 
-- [ ] **Step 4: 정답 목록 작성**
+- [x] **Step 4: 정답 목록 작성**
 
 사람이 원본 이미지를 보고 작성한다. 평가 전용이며 파이프라인은 읽지 않는다.
 
@@ -2121,7 +2121,7 @@ requirements:
 Run: `pytest tests/test_evaluate.py -v`
 Expected: 5 passed
 
-- [ ] **Step 5: CLI 테스트 추가**
+- [x] **Step 5: CLI 테스트 추가**
 
 `tests/test_cli.py`에 추가:
 
@@ -2142,7 +2142,7 @@ def test_evaluate_command_prints_metrics(monkeypatch, tmp_path):
 Run: `pytest tests/test_cli.py -v`
 Expected: FAIL — `No such command 'evaluate'`
 
-- [ ] **Step 6: CLI 구현**
+- [x] **Step 6: CLI 구현**
 
 `src/cli.py`: `from typing import List`를 `from pathlib import Path` + `from typing import List, Optional`로, `from settings import load_settings`를 `from settings import ROOT, load_settings`로 바꾸고 끝에 추가:
 
@@ -2174,12 +2174,12 @@ def evaluate(
             console.print(f"  불일치: {r.id} {r.text} — 정답 {t.priority}/{t.category}, 추출 {r.priority}/{r.category}")
 ```
 
-- [ ] **Step 7: 통과 확인**
+- [x] **Step 7: 통과 확인**
 
 Run: `pytest -q`
 Expected: 76 passed
 
-- [ ] **Step 8: 커밋**
+- [x] **Step 8: 커밋**
 
 ```bash
 git add src/preprocessing/evaluate.py src/cli.py tests/test_evaluate.py tests/test_cli.py tests/fixtures/criteria_truth

@@ -14,6 +14,13 @@ def test_output_schema_is_openai_strict_compatible():
     assert to_strict_json_schema(LLMJudgeOutput)["additionalProperties"] is False
 
 
+def test_judgment_schema_puts_evidence_and_reason_before_status():
+    """상태를 먼저 고르면 사유와 어긋난다 (Y1: 사유는 '충족하지 못한다', 상태는 met). 근거 → 사유 → 상태 순서로 생성시킨다."""
+    from scoring.judge import LLMJudgment
+    order = list(LLMJudgment.model_json_schema()["properties"])
+    assert order.index("quotes") < order.index("reason") < order.index("status")
+
+
 def test_prompt_lists_requirements_with_scope_and_rendered_resume_only():
     reqs = [make_requirement("r1", "고등학교 졸업 이상"), make_requirement("r2", "화공 전공", positions=["공정"])]
     prompt = build_prompt(make_criteria(reqs), reqs, CAND)

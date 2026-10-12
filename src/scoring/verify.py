@@ -20,8 +20,12 @@ LINE_NO = re.compile(r"^\s*L\d+\s*")
 NEEDS_EVIDENCE = {"met", "partial", "unmet"}
 
 
+LABEL_PUNCT = re.compile(r"[\[\]:：]")      # '[주소] 서울' ↔ '주소: 서울' — 줄 머리표 표기 차이는 무시
+
+
 def _found(quote: str, text: str) -> bool:
-    return find_quote(quote, text) is not None or find_fragments(quote, text) is not None
+    q, t = LABEL_PUNCT.sub(" ", quote), LABEL_PUNCT.sub(" ", text)
+    return find_quote(q, t) is not None or find_fragments(q, t) is not None
 
 
 def judge_requirements(out: LLMJudgeOutput, requirements: list[Requirement], candidate: Candidate,

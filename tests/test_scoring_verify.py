@@ -26,6 +26,12 @@ def test_quote_must_exist_in_rendered_resume_else_unknown():
     assert (got["r2"].status, got["r2"].flags) == ("unknown", ["quote_not_found"])
 
 
+def test_quote_label_punctuation_is_ignored():
+    """'[자기 신고] 야간근무 가능'을 '자기 신고: 야간근무 가능'으로 옮겨도 같은 줄이다 (Y1 관찰)."""
+    got = run([make_requirement("r1", "야간근무")], ("r1", "met", ["자기 신고: 야간근무 가능"], []))
+    assert (got["r1"].status, got["r1"].flags) == ("met", [])
+
+
 def test_judgment_without_evidence_and_missing_or_unknown_ids():
     reqs = [make_requirement("r1", "a"), make_requirement("r2", "b")]
     got = run(reqs, ("r1", "unmet", [], []), ("r9", "met", [], []), ("r1", "met", [], []))

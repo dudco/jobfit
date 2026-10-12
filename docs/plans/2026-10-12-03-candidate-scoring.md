@@ -37,7 +37,7 @@
 - Modify: `src/settings.py`, `.env.example`, `README.md` (설정 표)
 - Test: `tests/test_settings.py`
 
-- [ ] **Step 1: 실패하는 테스트**
+- [x] **Step 1: 실패하는 테스트**
 
 `tests/test_settings.py`의 `PREP_KEYS`에 `"JOBFIT_JUDGE_MODEL"`을 추가하고 테스트 추가:
 
@@ -52,7 +52,7 @@ def test_judge_model_from_env_and_default(monkeypatch):
 
 Run: `pytest tests/test_settings.py -q` → FAIL (`judge_model` 없음)
 
-- [ ] **Step 2: 구현**
+- [x] **Step 2: 구현**
 
 ```python
 DEFAULT_JUDGE_MODEL = "gpt-4.1"
@@ -74,7 +74,7 @@ Run: `pytest -q` → PASS. 커밋 `feat(settings): 판정 모델 설정`
 - Create: `src/scoring/__init__.py`, `src/scoring/candidate.py`
 - Test: `tests/test_candidate.py`
 
-- [ ] **Step 1: 실패하는 테스트**
+- [x] **Step 1: 실패하는 테스트**
 
 ```python
 import json
@@ -148,7 +148,7 @@ def test_duplicate_ids_rejected(tmp_path):
 
 Run → FAIL (모듈 없음)
 
-- [ ] **Step 2: 구현** — `src/scoring/candidate.py`
+- [x] **Step 2: 구현** — `src/scoring/candidate.py`
 
 ```python
 """지원자(목업 이력서) 모델과 줄 번호 렌더링 (ADR-0016).
@@ -296,7 +296,7 @@ Run → PASS. 커밋 `feat(scoring): 이력서 모델·줄 번호 렌더링`
 - Create: `src/scoring/result.py`
 - Test: `tests/test_result.py`
 
-- [ ] **Step 1: 실패하는 테스트**
+- [x] **Step 1: 실패하는 테스트**
 
 ```python
 from scoring.result import (CandidateScore, MatchResult, PositionScore, PostingRef, RequirementJudgment,
@@ -327,7 +327,7 @@ def test_save_load_roundtrip_atomic(tmp_path):
     assert load_result(tmp_path, "saramin", "99") is None
 ```
 
-- [ ] **Step 2: 구현** — `src/scoring/result.py`
+- [x] **Step 2: 구현** — `src/scoring/result.py`
 
 ```python
 """매칭 결과 모델과 저장 (스펙 03 6.2). 저장은 원자적으로 — ranking.json이 있으면 완전한 결과다."""
@@ -438,7 +438,7 @@ Run → PASS. 커밋 `feat(scoring): 결과 모델·가중치·저장`
 - Create: `src/scoring/rules.py`
 - Test: `tests/test_rules.py`
 
-- [ ] **Step 1: 실패하는 테스트**
+- [x] **Step 1: 실패하는 테스트**
 
 ```python
 import pytest
@@ -485,7 +485,7 @@ def test_years_status(have, need, expected):
     assert years_status(have, need) == expected
 ```
 
-- [ ] **Step 2: 구현** — `src/scoring/rules.py`
+- [x] **Step 2: 구현** — `src/scoring/rules.py`
 
 ```python
 """LLM에게 맡기지 않는 계산 (ADR-0015): 학력 서열, 경력 기간 병합."""
@@ -551,7 +551,7 @@ Run → PASS. 커밋 `feat(scoring): 학력 서열·경력 연수 규칙`
 - Create: `src/scoring/score.py`
 - Test: `tests/test_score.py`
 
-- [ ] **Step 1: 실패하는 테스트** — 설계 원칙이 깨지면 실패하는 것만
+- [x] **Step 1: 실패하는 테스트** — 설계 원칙이 깨지면 실패하는 것만
 
 ```python
 import pytest
@@ -613,7 +613,7 @@ def test_summary_is_built_from_judgments():
     assert lines[-1] == "법정 우대 1개는 점수에 반영하지 않음"
 ```
 
-- [ ] **Step 2: 구현** — `src/scoring/score.py`
+- [x] **Step 2: 구현** — `src/scoring/score.py`
 
 ```python
 """점수 집계와 설명 — 순수 함수 (ADR-0017). 판정만 있으면 LLM 없이 다시 계산할 수 있다."""
@@ -686,7 +686,7 @@ Run → PASS. 커밋 `feat(scoring): 점수 집계·기여도·템플릿 설명`
 - Create: `src/scoring/judge.py`
 - Test: `tests/test_judge.py`
 
-- [ ] **Step 1: 실패하는 테스트**
+- [x] **Step 1: 실패하는 테스트**
 
 ```python
 from openai.lib._pydantic import to_strict_json_schema
@@ -747,7 +747,7 @@ def make_criteria(requirements, positions=(), posting_id="55", suitable=True):
 
 (`PostingCriteria` 필드 이름은 `src/preprocessing/criteria.py`를 따른다 — 다르면 픽스처를 맞춘다.)
 
-- [ ] **Step 2: 구현** — `src/scoring/judge.py`
+- [x] **Step 2: 구현** — `src/scoring/judge.py`
 
 ```python
 """요건별 판정 — LLM이 맡는 유일한 부분 (ADR-0015). 숫자 점수는 내지 않는다."""
@@ -824,7 +824,7 @@ Run → PASS. 커밋 `feat(scoring): 판정 프롬프트·출력 스키마`
 - Create: `src/scoring/verify.py`
 - Test: `tests/test_scoring_verify.py`
 
-- [ ] **Step 1: 실패하는 테스트**
+- [x] **Step 1: 실패하는 테스트**
 
 ```python
 from scoring.candidate import Candidate, render
@@ -879,7 +879,7 @@ def test_experience_rule_computes_years_from_selected_jobs():
     assert "2.0년" in got["r1"].reason and "3년" in got["r1"].reason
 ```
 
-- [ ] **Step 2: 구현** — `src/scoring/verify.py`
+- [x] **Step 2: 구현** — `src/scoring/verify.py`
 
 ```python
 """판정 검증과 규칙 보정 — 코드가 책임지는 부분 (ADR-0015).
@@ -954,7 +954,7 @@ Run → PASS. 커밋 `feat(scoring): 판정 인용 검증·규칙 보정`
 - Create: `src/scoring/service.py`
 - Test: `tests/test_scoring_service.py`
 
-- [ ] **Step 1: 실패하는 테스트**
+- [x] **Step 1: 실패하는 테스트**
 
 ```python
 import json
@@ -1098,7 +1098,7 @@ def test_unseen_job_family_with_years_rule(tmp_path):
     assert (j.status, j.rule, result.candidates[0].score) == ("unmet", "experience_years", 0)   # 1년/2년 = 0.5 < 0.6
 ```
 
-- [ ] **Step 2: 구현** — `src/scoring/service.py`
+- [x] **Step 2: 구현** — `src/scoring/service.py`
 
 ```python
 """스코어링 오케스트레이션. CLI·API가 같은 함수를 호출한다 (ADR-0002).
@@ -1197,7 +1197,7 @@ Run: `pytest -q` → PASS. 커밋 `feat(scoring): 매칭 서비스 — 분야별
 - Create: `dataset/candidates/*.json` (12건), `dataset/README.md`, `src/scoring/evaluate.py`
 - Test: `tests/test_dataset.py`, `tests/test_scoring_evaluate.py`
 
-- [ ] **Step 1: 데이터셋 구성 테스트 (먼저 실패)**
+- [x] **Step 1: 데이터셋 구성 테스트 (먼저 실패)**
 
 ```python
 from collections import Counter
@@ -1230,7 +1230,7 @@ def test_no_sensitive_personal_fields():
             assert word not in text, (path.name, word)
 ```
 
-- [ ] **Step 2: 이력서 작성** — 스펙 03 7장 표대로. 공통 원칙:
+- [x] **Step 2: 이력서 작성** — 스펙 03 7장 표대로. 공통 원칙:
   - 사실은 한 필드에 한 번만 (렌더링 한 줄 = 사실 하나).
   - 같은 라벨의 두 사람은 **다른 표현**을 쓴다 (perfect-2는 공고 단어를 피한다).
   - `meta.expected`에는 의도적으로 갈리는 요건만 적는다 (요건 문구의 일부를 `requirement`에).
@@ -1255,7 +1255,7 @@ def test_no_sensitive_personal_fields():
 
 Run: `pytest tests/test_dataset.py -q` → PASS
 
-- [ ] **Step 3: 평가 도구 테스트 (먼저 실패)** — `tests/test_scoring_evaluate.py`
+- [x] **Step 3: 평가 도구 테스트 (먼저 실패)** — `tests/test_scoring_evaluate.py`
 
 ```python
 from scoring.candidate import Candidate
@@ -1301,7 +1301,7 @@ def test_order_violation_and_range_reported():
     assert ev.out_of_range == ["p 70 (perfect ≥ 85)", "m 45 (mismatch < 40)"]
 ```
 
-- [ ] **Step 4: 구현** — `src/scoring/evaluate.py`
+- [x] **Step 4: 구현** — `src/scoring/evaluate.py`
 
 ```python
 """매칭 결과를 목업의 의도(meta)와 비교한다 — 평가 전용. 스코어링 경로는 이 모듈을 쓰지 않는다."""
@@ -1361,6 +1361,8 @@ def evaluate_ranking(result: MatchResult, candidates: list[Candidate]) -> Rankin
 
 `out_of_range`는 결과 파일의 지원자 순서(순위 순)를 따른다.
 
+구현 메모: 희망 분야가 둘 이상인 지원자(soil-partial-3)는 의도 판정이 대표 분야가 아닌 분야의 요건일 수 있어, `_find()`가 대표 분야부터 다른 평가 분야 순으로 찾는다 (`test_expected_judgment_found_in_other_evaluated_position`). CLI는 rich 마크업과 충돌하지 않도록 이력서 인용(`[학력] …`)을 `escape()`한다.
+
 Run → PASS. 커밋 `feat(dataset): 목업 이력서 12건과 의도 대비 평가 도구`
 
 ---
@@ -1371,7 +1373,7 @@ Run → PASS. 커밋 `feat(dataset): 목업 이력서 12건과 의도 대비 평
 - Modify: `src/cli.py`, `README.md` (사용법)
 - Test: `tests/test_cli.py`
 
-- [ ] **Step 1: 실패하는 테스트** — 어댑터가 서비스를 올바르게 호출하고 결과를 그리는지만
+- [x] **Step 1: 실패하는 테스트** — 어댑터가 서비스를 올바르게 호출하고 결과를 그리는지만
 
 ```python
 def test_match_prints_ranking_with_intent_labels(monkeypatch, tmp_path):
@@ -1397,7 +1399,7 @@ def test_result_shows_requirement_evidence(monkeypatch, tmp_path):
     ...  # 없는 결과면 exit 1, "먼저 `jobfit match 55`"
 ```
 
-- [ ] **Step 2: 구현** — `src/cli.py`에 추가
+- [x] **Step 2: 구현** — `src/cli.py`에 추가
 
 ```python
 from scoring import service as scoring_service

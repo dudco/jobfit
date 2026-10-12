@@ -1,7 +1,7 @@
 # 03. 지원자 매칭 스코어링 (scoring) 설계
 
 - 날짜: 2026-10-12
-- 상태: 초안 — 검토 대기
+- 상태: 승인 · 구현 완료 (실험 대기)
 - 단계: ③ 스코어링 ([architecture](../architecture.md))
 - 입력: 스펙 02의 `PostingCriteria` (평가용 A S-OIL 55189170, B 오리온 55162188), 목업 이력서 12건
 - 구현 계획: [plans/2026-10-12-03-candidate-scoring.md](../plans/2026-10-12-03-candidate-scoring.md)

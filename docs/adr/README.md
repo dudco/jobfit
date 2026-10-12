@@ -19,7 +19,7 @@
 | [0013](0013-requirement-model.md) | 요건은 "유형 고정 + 모집분야 범위" 구조로 표현한다 | 채택 | 02·03 |
 | [0014](0014-llm-response-cache.md) | LLM 응답을 입력 해시로 디스크에 캐시한다 | 채택 | 02·03 |
 | [0015](0015-judge-then-aggregate.md) | 매칭은 LLM이 요건별로 판정하고, 점수는 코드가 집계한다 | 채택 | 03 |
-| [0016](0016-candidate-model-and-mock-dataset.md) | 이력서는 반정형 JSON + 줄 번호 렌더링, 목업 12건은 레포에 둔다 | 채택 | 03 |
+| [0016](0016-candidate-model-and-mock-dataset.md) | 이력서는 반정형 JSON(= 이력서 전처리 결과 계약) + 줄 번호 렌더링, 목업 12건은 레포에 둔다 | 채택 | 03 |
 | [0017](0017-score-formula.md) | 점수식 — 필수·우대 가중 평균 × 필수 미충족 게이트, "모름"은 절반 | 채택 (상수는 실험으로 보정) | 03 |
 | [0018](0018-statutory-preferences-not-scored.md) | 법정 우대(국가보훈·장애인)는 점수에 반영하지 않고 이력서에서 받지 않는다 | 채택 | 02·03 |
 

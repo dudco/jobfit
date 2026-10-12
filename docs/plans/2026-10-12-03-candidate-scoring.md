@@ -96,6 +96,7 @@ BASE = {
     "declarations": ["2027년 1월 입사 가능"],
     "skills": ["엑셀"],
     "self_intro": "첫 문단\n\n둘째 문단",
+    "source": {"method": "mock", "format": None, "file_sha256": None, "extracted_text": None},
     "meta": {"target_posting": "55189170", "label": "perfect", "intent": "같은 단어로 충족",
              "expected": [{"requirement": "공인영어성적", "status": "met"}]},
 }
@@ -111,10 +112,15 @@ def test_render_numbers_one_fact_per_line():
     assert [l.split(" ", 1)[1] for l in lines if "[자기소개]" in l] == ["[자기소개] 첫 문단", "[자기소개] 둘째 문단"]
 
 
-def test_render_never_includes_meta():
+def test_render_never_includes_meta_or_source():
     text = render(Candidate.model_validate(BASE))
-    for secret in ("perfect", "55189170", "같은 단어로 충족", "expected"):
+    for secret in ("perfect", "55189170", "같은 단어로 충족", "expected", "mock"):
         assert secret not in text
+
+
+def test_source_defaults_to_mock():
+    data = {k: v for k, v in BASE.items() if k != "source"}
+    assert Candidate.model_validate(data).source.method == "mock"
 
 
 def test_ongoing_job_and_optional_fields():
@@ -192,6 +198,14 @@ class LanguageScore(BaseModel):
     acquired: Optional[str] = None
 
 
+class CandidateSource(BaseModel):
+    """이력서 출처. 스코어링 입력은 '이력서 전처리 결과' JSON이고 원본 형식은 여기에만 기록한다 (ADR-0016)."""
+    method: Literal["mock", "upload", "ats"] = "mock"
+    format: Optional[str] = None              # pdf | docx | html | md | image
+    file_sha256: Optional[str] = None
+    extracted_text: Optional[str] = None      # 추출 텍스트 위치
+
+
 class ExpectedJudgment(BaseModel):
     requirement: str                          # 요건 문구의 일부 ("공인영어성적")
     status: Status
@@ -218,6 +232,7 @@ class Candidate(BaseModel):
     declarations: list[str] = Field(default_factory=list)
     skills: list[str] = Field(default_factory=list)
     self_intro: str = ""
+    source: CandidateSource = Field(default_factory=CandidateSource)
     meta: Optional[CandidateMeta] = None
 
 
@@ -1219,6 +1234,7 @@ def test_no_sensitive_personal_fields():
   - 사실은 한 필드에 한 번만 (렌더링 한 줄 = 사실 하나).
   - 같은 라벨의 두 사람은 **다른 표현**을 쓴다 (perfect-2는 공고 단어를 피한다).
   - `meta.expected`에는 의도적으로 갈리는 요건만 적는다 (요건 문구의 일부를 `requirement`에).
+  - `source`는 `{"method": "mock"}` — 이력서 전처리를 손으로 대신한 결과라는 표시.
 
 | 파일 | 핵심 사실 | `meta.expected` |
 |---|---|---|
@@ -1235,7 +1251,7 @@ def test_no_sensitive_personal_fields():
 | `orion-partial-3.json` | 고졸 · 세종시 · 물류센터 피킹 1년 · 야간 언급 없음 | 야간근무 unknown, 근무경험 partial |
 | `orion-mismatch-1.json` | 컴퓨터공학 석사 · 서울 · 백엔드 개발 5년 · 자기 신고 "야간근무 불가" · skills ["포장", "배합", "청주"] | 야간근무 unmet, 근무경험 partial |
 
-`dataset/README.md`: 위 표(설계 의도), 필드 설명, "`meta`는 평가 전용 — 스코어링은 읽지 않음".
+`dataset/README.md`: 위 표(설계 의도), 필드 설명, "이 JSON은 이력서 전처리 결과 형식 — 실제 이력서(PDF 등)는 전처리 단계(ADR-0016, 미구현)가 같은 형식으로 만든다", "`meta`는 평가 전용 — 스코어링은 읽지 않음".
 
 Run: `pytest tests/test_dataset.py -q` → PASS
 

@@ -43,7 +43,7 @@
 | F8 | 설명은 템플릿으로 만든다: 필수 충족 수, 미충족 요건, 확인 필요 요건, 우대 충족 수 |
 | F9 | 결과(랭킹 + 요건별 근거)를 `data/results/{site}/{posting_id}/ranking.json`에 저장한다 |
 | F10 | CLI: `jobfit match <rec_idx>...` (`--candidates`, `--refresh`), `jobfit result <rec_idx> [--candidate ID]` |
-| F11 | 목업 이력서 12건(공고당 완벽 2 · 부분 3 · 미스매치 1)을 레포에 포함한다. 의도 라벨은 평가 전용이며 스코어링은 읽지 않는다 |
+| F11 | 목업 이력서 12건(공고당 완벽 2 · 부분 3 · 미스매치 1)을 레포에 포함한다. 목업은 이력서 전처리 결과(`Candidate` JSON)로 본다. 의도 라벨은 평가 전용이며 스코어링은 읽지 않는다 |
 
 ### 비기능
 
@@ -272,8 +272,17 @@ class Candidate:
     declarations: list[str]           # 입사지원서의 자기 신고 항목 ("2027년 1월 입사 가능", "야간·교대 근무 가능")
     skills: list[str]
     self_intro: str
+    source: CandidateSource           # 출처 — 렌더링·판정·점수에 쓰지 않는다
     meta: CandidateMeta
+
+class CandidateSource:
+    method: "mock" | "upload" | "ats"  # 목업은 mock
+    format: str | None                # "pdf" | "docx" | "html" | "md" | "image"
+    file_sha256: str | None           # 원본 파일 해시
+    extracted_text: str | None        # 추출 텍스트 위치 (이력서 전처리 결과)
 ```
+
+- **이 JSON은 "이력서 전처리 결과"라는 계약이다.** 스코어링은 원본 형식(PDF·DOCX·HTML·MD·이미지)을 모른다. 목업 12건은 전처리를 손으로 대신한 결과다. 실제 이력서용 전처리 단계(형식별 텍스트 추출 → LLM 구조화 → 코드 검증)의 설계는 [ADR-0016](../adr/0016-candidate-model-and-mock-dataset.md)에 있다 (미구현).
 
 - 민감 정보(장애·보훈 여부, 성별 표시용 필드, 나이·생년)는 **필드를 두지 않는다** (ADR-0018). 병역은 국내 입사지원서의 일반 항목이라 둔다.
 - 줄 번호 렌더링 예:
@@ -417,6 +426,7 @@ def load_result(data_dir: Path, site: str, posting_id: str) -> MatchResult | Non
 
 - API·UI (스펙 04 — 이 스펙의 `match`/`load_result`를 그대로 호출)
 - 고객사 경유 데이터 유입 구조 (README 아키텍처 문서)
-- 실제 이력서 파싱(PDF·이미지), 대규모 지원자 풀의 1차 필터링(임베딩 검색 → 상위 K명만 판정) — README에 확장 방향으로만 기록
+- 이력서 전처리 단계 (PDF·DOCX·HTML·MD·이미지 → `Candidate` JSON) — 설계만 [ADR-0016](../adr/0016-candidate-model-and-mock-dataset.md). 목업 JSON이 그 결과물 역할을 한다
+- 대규모 지원자 풀의 1차 필터링(임베딩 검색 → 상위 K명만 판정) — README에 확장 방향으로만 기록
 - 예외 조항(면제·대체) 구조화 — 이번 데이터셋에는 해당 지원자가 없다. 필요해지면 `Requirement`에 `exceptions` 필드 추가 (스펙 02 확장)
 - 가중치 UI 슬라이더 (판정·집계가 분리돼 있어 스펙 04에서 붙일 수 있음)

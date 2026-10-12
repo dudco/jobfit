@@ -2198,7 +2198,7 @@ git commit -m "feat(preprocessing): 정답 대비 평가 도구(jobfit evaluate)
 
 `tests/fixtures/criteria_truth/*.yaml`을 원본 이미지와 대조해 빠진 요건·잘못된 필수/우대·유형을 고친다.
 
-- [ ] **Step 2: 키와 모델 확인**
+- [x] **Step 2: 키와 모델 확인**
 
 ```bash
 cp .env.example .env      # OPENAI_API_KEY 입력
@@ -2206,7 +2206,7 @@ jobfit models | grep -E "gpt-4\.1|gpt-4o|gpt-5"
 ```
 기본값(`gpt-4.1`, `gpt-4.1-mini`)이 목록에 없으면 `.env`의 `JOBFIT_VISION_MODEL`, `JOBFIT_TEXT_MODEL`을 목록에 있는 모델로.
 
-- [ ] **Step 3: 첫 실행과 결과 검토**
+- [x] **Step 3: 첫 실행과 결과 검토**
 
 ```bash
 jobfit extract 55162188 55189170
@@ -2217,7 +2217,7 @@ jobfit evaluate 55189170
 ```
 확인: `data/criteria/saramin/<ID>/slices/*.png`(조각), `transcript.md`(전사)를 원본과 대조한다.
 
-- [ ] **Step 4: 실험 X1 — 분할 필요성**
+- [x] **Step 4: 실험 X1 — 분할 필요성**
 
 ```bash
 for H in 0 1200 800; do
@@ -2228,7 +2228,7 @@ done
 ```
 기록: 높이별 재현율·정밀도, 전사에서 숫자·고유명사 오독 수. 재현율이 같으면 조각이 적은 쪽.
 
-- [ ] **Step 5: 실험 X2 — 모델**
+- [ ] **Step 5: 실험 X2 — 모델** — 비전 모델 비교는 생략 (X1 진단: 전사는 충분, 오류는 구조화). 구조화 모델만 비교 → Task 13 Step 4
 
 X1에서 고른 높이로, 비전 모델을 상위/경량 2종으로 바꿔 같은 비교. 차이가 없으면 경량.
 
@@ -2257,3 +2257,43 @@ Expected: OpenAI 대시보드 기준 추가 호출 0건 (캐시 적중)
 git add src/settings.py docs README.md tests/fixtures/criteria_truth
 git commit -m "docs: 스펙 02 실험 결과와 전처리 기본값 확정"
 ```
+
+---
+
+### Task 13: 실험 X1 결과에 따른 보정
+
+X1 진단(스펙 02 11장): 분할 높이 1200이 최선, 전사는 충분하고 남은 오류는 구조화 단계. Mac·Linux 간 캐시 불일치 발견.
+
+**Files:**
+- Modify: `src/preprocessing/verify.py`, `src/preprocessing/prompts.py`, `src/llm.py`
+- Test: `tests/test_verify.py`, `tests/test_llm.py`
+
+- [x] **Step 1: "무관" 문구 제외·모집분야 불일치 표시 (TDD)**
+
+`tests/test_verify.py`에 `test_phrases_meaning_no_condition_are_dropped`, `test_requirement_positions_must_name_known_positions` 추가 → FAIL 확인 → `verify.py`에 `means_no_condition()`(무관 ∧ ¬우대)과 `unknown_position` 플래그 구현 → PASS. 커밋 `fix(preprocessing): '무관' 문구 제외, 모집분야 이름 불일치 표시`
+
+- [x] **Step 2: 캐시 키를 픽셀 해시로 (TDD)**
+
+`tests/test_llm.py`에 `test_cache_key_uses_pixels_not_encoded_bytes`(같은 그림, 다른 압축 레벨) 추가 → FAIL 확인 → `llm.py`에 `_image_digest()` 구현 → PASS. 커밋 `fix(llm): 캐시 키를 인코딩 바이트 대신 이미지 픽셀로`
+
+- [x] **Step 3: 구조화 프롬프트 일반 규칙**
+
+`STRUCTURE_SYSTEM`에 추가: 표 열 제목이 조건(전공·자격·경력·우대)이면 각 칸은 그 행 분야의 요건, '무관(… 우대)'는 우대 부분만, 예외·면제·대체 조항은 별도 요건 아님, 모든 섹션의 우대 문구, positions 이름 일치. 특정 공고 문구가 아니라 일반 규칙으로 쓴다. 커밋 `fix(preprocessing): 구조화 프롬프트 — …`
+
+Run: `pytest -q`
+Expected: 79 passed
+
+- [ ] **Step 4: 재실행·평가 [수동 — API]**
+
+```bash
+uv pip install -e ".[dev]"
+jobfit extract 55162188 55189170 --refresh
+jobfit evaluate 55162188 && jobfit evaluate 55189170
+JOBFIT_TEXT_MODEL=gpt-4.1 jobfit extract 55162188 55189170 --refresh   # X2: 구조화 모델 비교
+JOBFIT_TEXT_MODEL=gpt-4.1 jobfit evaluate 55162188 && JOBFIT_TEXT_MODEL=gpt-4.1 jobfit evaluate 55189170
+```
+캐시 키가 바뀌어 전사도 한 번 다시 호출된다 (조각 6개). 이후 반복 실행은 구조화만 호출된다.
+
+- [ ] **Step 5: 수용 기준 판정과 기록**
+
+스펙 02 10장 기준으로 판정하고, 11장 X2·X3 표, ADR(구조화 모델)·`DEFAULT_TEXT_MODEL`을 갱신한다.

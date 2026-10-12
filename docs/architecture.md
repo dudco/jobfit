@@ -71,7 +71,8 @@ data/
     snapshot.json                       매니페스트 (출처, 수집 시각, 파일 해시, 이미지 메타)
     view.html  detail.html              원본 HTML
     images/00.jpg …                     원본 이미지 (바이트 그대로)
-  criteria/…                         ② (스펙 02에서 정의)
+  criteria/{site}/{posting_id}/      ② 분할 조각, transcript.md, criteria.json (스펙 02)
+  cache/llm/                         LLM 응답 캐시 (ADR-0014)
   results/…                          ③ (스펙 03에서 정의)
 ```
 

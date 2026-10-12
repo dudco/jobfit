@@ -44,7 +44,8 @@ def score_candidate(llm: LLM, criteria: PostingCriteria, candidate: Candidate, *
         for r in applicable(criteria, p):
             union.setdefault(r.id, r)
     reqs = sorted(union.values(), key=criteria.requirements.index)
-    out = judge(llm, criteria, candidate, reqs, model=model)          # 지원자당 1회
+    named = [p for p in positions if p is not None]
+    out = judge(llm, criteria, candidate, reqs, model=model, positions=named or None)   # 지원자당 1회
     judged = {j.requirement_id: j for j in judge_requirements(out, reqs, candidate, today=today)}
     per_position = [aggregate([judged[r.id] for r in applicable(criteria, p)], p, weights) for p in positions]
     best = max(per_position, key=lambda ps: ps.raw)                   # 동점이면 먼저 평가한 분야

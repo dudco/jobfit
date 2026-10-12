@@ -6,6 +6,8 @@
 | [specs/](specs/) | 단계별 설계 문서 — 무엇을, 왜, 어떤 범위로 |
 | [plans/](plans/) | 스펙별 구현 계획 — 태스크·스텝 단위 TDD 절차 |
 | [adr/](adr/README.md) | 아키텍처 결정 기록 |
+| [design-decisions.md](design-decisions.md) | 설계 결정과 트레이드오프 요약 (README 작성 자료) |
+| [data-ingestion-via-customers.md](data-ingestion-via-customers.md) | 고객사 경유 데이터 유입 구조 (설계, 미구현) |
 
 ## 진행 방식
 
